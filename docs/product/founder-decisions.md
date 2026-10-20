@@ -1,30 +1,45 @@
-# Founder Decision Brief: PRD MVP v1
+# Founder Status Page
 
-**For:** Sriram, Navneet  **From:** product-manager  **Date:** 2026-10-19  **Read with:** `docs/product/prd-mvp-v0.md` (v1, developer-reviewed)
-**Bottom line:** **NOT YET on build spend and hiring. GO this week on zero-cost validation**, once decision 0 is cleared. Details at the end.
+**For:** Sriram (sole founder)  **From:** product-manager  **Updated:** 2026-10-19 (after Sriram's decisions in chat)  **Read with:** `docs/product/prd-mvp-v0.md` v1.1
+**Bottom line:** Phase 1 is a synthetic-data technical prototype with no interviews. **Stage 0 is approved and handed to the developer.** Nothing past Stage 0 starts without your written approval.
 
-## Decisions, most urgent first
-| # | Decision (by) | Recommendation | Why | If you decline | Cost of being wrong |
-|---|---|---|---|---|---|
-| **0** | **GATING: employment and invention assignment** (now, before any code, discovery call or design-partner contact) | Each founder reads his own offer letter, invention-assignment/PIIA, outside-activity and conflict-of-interest policies, and gets his own employment counsel's view. **Navneet/Capital One:** Capital One is itself a furnisher, so dispute tooling may sit inside its line of business; also confirm that no Capital One confidential information or customer relationships are used. The same check applies to Sriram's current employer. **This is a flag, not legal advice.** | An employer claim on the IP or a conflict finding could void the company's ownership of the work or end a founder's job | Every artefact made before clearing it carries an ownership question | High: unfixable later (investors' diligence will ask); cheap to check now |
-| 1 | Segment, channel, category (Oct 26) | Fintech/online lenders, 500-5,000 disputes/mo; ACDV; payment history; Reg V triage as the fallback | Private liability on ACDVs (A); verifiable against the ledger; fastest buyers [A] | Discovery calls lack a target; build cannot pass R-10 | Medium: discovery is designed to overturn it within 10 calls; switching category costs ~1-2 eng-weeks |
-| 2 | Pricing hypothesis to test, not a price (Oct 26) | Test $30K/yr floor + $3/dispute with Van Westendorp and 3 structures in all 10 calls | Labor savings alone are only break-even at this price (U17); we must learn whether defensibility is worth more | Calls yield no WTP data; pricing guessed later | Low: it is a test |
-| 3 | Review policy (Oct 26) | 100% human approval; no auto-submit; system never proposes DELETE; second supervisor approval for DELETE and high-severity suspicious content | 623(b) liability; only 27-32% of furnishers want more automation (C/B) | Weaker safety story with buyers and counsel | Low if too strict (slower reviews); high if too loose (a wrongful verify harms a consumer) |
-| 4 | Eval thresholds: accept the **tiered eval** (Oct 26) | Accept PRD Appendix B: property tests, ~1,000-case safety set (0 failures in ≥600 should-not-verify), ≥100 red-team cases, 200 human-labelled cases | 200 cases alone cannot support any safety floor (≤0.5% needs ≥598 cases with zero failures) | Either floors we cannot honestly claim, or no floors | Medium: synthetic results still prove nothing about real data; the pilot must re-baseline |
-| 5 | Team size and labelling hours (Nov 2) | **2 engineers** (10-12 wks) over 1 (18-21 wks). **Founders commit ~140-170 labelling hours** (~6-7 h each per week for 12 weeks) | 1 engineer finishes after the 90-day e-OSCAR-sponsor clock | We reach the pivot decision with half a prototype | ~10-15% more engineer time and about double monthly burn, for ~8-9 weeks sooner. Price it at your own loaded rate |
-| 6 | LLM hosting (prototype now; pilot after discovery) | Prototype: hosted model, pinned, under zero-retention terms verified in ADR-006, synthetic data only. Pilot: decide per partner; keep in-VPC swappable | No real data in the MVP; banks likely need in-VPC (U7) | In-VPC now adds effort and cost for no learning | Low now; high at pilot if 5+ of 7 calls ban hosted LLMs (re-scope then) |
-| 7 | Engage FCRA counsel (Nov 9) | Get a fixed-scope quote. Ask: (a) e-OSCAR ToU and third-party addendum: can we act as provider, what notice is owed; (b) liability allocation when AI drafts and a human submits; (c) retention period and conflict with privacy deletion; (d) *Roberts* scope for claim review; (e) a CRO-exclusion analogue for ACDVs; (f) weight of the withdrawn CFPB guidance; (g) which business-day calendar governs due dates (U21) | Every §8 row in the PRD is flagged for counsel; nothing can be pitched as compliant | We cannot run a real-data pilot or make claims to buyers | Low cost to engage early; high cost of a pitch claim we cannot back |
+## Decided (2026-10-19, by Sriram)
+| # | Decision | Note |
+|---|---|---|
+| 0 | Employment/IP gate **cleared** | Your own statement that employment is no issue. Recorded as stated; not verified by any agent; no legal advice given |
+| - | **Sole founder** | Navneet is no longer involved. You own every decision, label and review |
+| - | **Phase 1 = no interviews** | Desk analysis only. `discovery-plan.md` is deferred to Phase 2, not deleted |
+| 1 | **Wedge:** fintech/online lenders (500-5,000 disputes/mo); ACDV; payment history end to end; balance classify-only; Reg V triage as fallback | Desk evidence only (B/C); untested until Phase 2 |
+| 3 | **Review policy:** 100% human approval; no auto-submit; system never proposes DELETE; second supervisor approval for DELETE and HIGH suspicious content | R-17, R-19 |
+| 4 | **Eval:** tiered (PRD Appendix B), T3 ≈100 cases labelled by you alone; you spot-check ≥100 generator-labelled safety cases; agreement between labellers unmeasured | Kappa gate dropped; replaced by an intra-rater re-label check (B9). Labelling ≈70-80 h [A] |
+| 5 | **Build:** the developer agent builds; you review and approve in Stages 0-4 | The old 10-12 / 18-21-week figures were for human engineers and do not apply. Calendar time is **unknown** (U28) |
 
-## Next 7 days (Oct 20-26), after decision 0
-1. Both founders: resolve decision 0 and write down the outcome (no details needed in this repo).
-2. Decide 1-4 in one 60-minute session; tell the PM so DECISIONS.md rows move from PROPOSED to DECIDED.
-3. Build the list of 10 discovery targets (4 fintech, 3 auto, 3 regional bank) from public sources and personal networks, **excluding any Capital One confidential information or relationships**; book the first 3-4 calls using `discovery-plan.md`.
-4. In every call, ask Q11: would you sponsor e-OSCAR Stage access or share the developer guide? One sponsor is the single most valuable outcome of discovery.
-5. Ask 2 practitioners to review 20 synthetic cases for realism once the developer's 50-case pilot set exists (U20).
-6. Request a counsel quote (decision 7) and start sizing the hiring path for decision 5.
-7. Navneet and Sriram each label 10 trial cases to estimate real minutes per case before committing to the hours in decision 5.
+## Still open or deferred
+| Item | Status | When it must close |
+|---|---|---|
+| Pricing test | Deferred to Phase 2 (needs calls). No price may be quoted or pitched before then | Before any pricing claim |
+| FCRA counsel | Deferred. **Required before any real data, any pilot, and any compliance claim**; not needed for the synthetic prototype | Before Phase 3 |
+| LLM hosting | PROPOSED: hosted, pinned, zero-retention model on **synthetic data only**; `LlmClient` swappable to in-VPC. ADR-006 drafts it in Stage 0 | Your call at the Stage 0 gate (PRD Q13) |
+| Audit retention (7-year placeholder) | PROPOSED; counsel sets the real value (U10) | Before a pilot |
+| Phase 1 exit gate and evidence bars (below) | PROPOSED | Confirm at the Stage 0 gate (PRD Q12) |
+| Reg V fallback clock | PROPOSED: the 90 days start at the first Phase 2 call, since nobody is asked in Phase 1 | Confirm at the Stage 0 gate |
 
-## Go / not yet
-**Recommendation: NOT YET for build commitment (hiring, engineer start). GO now on discovery, ADRs and the synthetic generator.** Why: the plan is technically sound (developer: feasible with changes), but we have zero customer conversations, no e-OSCAR sponsor, and an unresolved ownership gate.
-**Flips to GO (commit 2 engineers) when all hold:** decision 0 cleared; by call 6, at least 3 nonbank firms report ≥500 disputes/mo with dispute quality a top-3 pain; at least 1 firm will discuss e-OSCAR sponsorship or share the guide; no firm prices it under $1/dispute; and hosted zero-retention LLMs are acceptable to at least 2.
-**Flips to STOP or PIVOT:** any ICP kill condition (5+ of 7 already served, WTP under $1/dispute, 5+ of 7 ban hosted LLMs) or no sponsor by day 90 (pivot to Reg V direct-dispute triage).
+## What Phase 1 can and cannot prove
+- **Can:** the intake → investigate → cited draft → human approval → audit record loop works on synthetic data; the rule layer cannot false-verify by construction; measured safety on generated stress sets (false-verify ≤0.5%, escalation and fraud routing ≥98%, 95% bounds); cost and latency per case; how long agent-built stages take.
+- **Cannot:** willingness to pay, the real dispute mix, real-data performance, e-OSCAR access, LLM-hosting tolerance, whether practitioners or examiners value it. With one labeller and no outside realism review, the human-set results are directional only.
+
+## Phase 1 exit gate (technical go/no-go; PRD §12)
+All must hold: Stages 0-4 approved by you; Appendix B hard floors B1-B7 met on frozen sets, gates B8-B9 met, no tolerance in its no-go zone; acceptance criteria S1-S8 pass; G5 (you reconstruct "why" for 10 of 10 sampled cases from the export alone); the restore drill passes `verify`; a results note labelled "synthetic data, unvalidated realism, one labeller". **Passing authorises Phase 2 only.**
+
+**Before any pricing claim:** Phase 2 pricing questions in ≥8 of 10 calls, ≥3 firms whose range includes the hypothesis, cost per dispute from ≥5 firms, none below $1/dispute.
+**Before a pilot:** Phase 1 exit; G2-G4 met with practitioners; realism review and a practitioner relabel of 30 cases; FCRA counsel engaged; a written partner commitment with data and e-OSCAR paths; hosting accepted; reference tables verified; independent security review; a separate pilot PRD.
+**Before hiring:** Phase 1 exit; ICP prove conditions met in Phase 2; ≥1 written shadow-pilot commitment; evidence that the agent build plus your review cannot meet the pilot timeline.
+
+## What you do next
+1. **Stage 0 review** when the developer hands off: read and approve or reject ADR-001 to 010 (≈8-12 h incl. the trial below [A]). Decide Q12 (exit gate, fallback clock) and Q13 (LLM hosting) at that gate.
+2. **Label the 20-case Stage 0 trial set** and time yourself; the PM re-states the labelling budget from your actual minutes.
+3. **Log your hours** per stage (U28, U32), so we can forecast Phase 1.
+4. **Set a Phase 1 time box at the Stage 1 gate** (PM recommendation, opinion): every Phase 1 week is spent on an untested segment and price, so decide in advance when you would pull Phase 2 discovery forward.
+5. Do not quote prices, describe the product as compliant, or touch real data until the bars above are met.
+
+Total Phase 1 time asked of you: **≈105-135 hours** (≈34-53 h stage reviews + ≈70-80 h labelling) [A, PM estimate; re-forecast after Stage 1].

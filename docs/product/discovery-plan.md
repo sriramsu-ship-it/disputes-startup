@@ -1,8 +1,10 @@
-# Discovery Plan: First 10 Calls (DRAFT; founders run it, nobody has been contacted)
+# Discovery Plan: First 10 Calls (PHASE 2, DEFERRED; Sriram runs it; nobody has been contacted)
 
-**Date:** 2026-10-19  **Owner:** product-manager  **Goal:** confirm or kill the wedge in `icp-and-wedge-memo.md` (resolves U1, U4, U5, U7, U9, U13, U14, U16, U17, U18). **Target finish:** 2026-11-27.
+> **Status 2026-10-19 (Sriram decision): DEFERRED to Phase 2. Not deleted.** Phase 1 builds from desk research with no interviews. This plan runs after the Phase 1 exit gate (PRD v1.1 §12), or earlier if Sriram pulls it forward. Until it runs, U1, U4, U5, U7, U9, U13, U14, U16, U17 and U18 stay open, and no pricing claim, pilot or hire may rest on them. Sriram is the sole founder and runs every call. Re-date the target finish when Phase 2 starts. The Reg V fallback clock (no e-OSCAR sponsor) is proposed to start on the first call.
 
-**Who to call:** 4 fintech/online lenders, 3 independent auto finance companies, 3 regional banks ($10-100B, the control group). Talk to the **credit bureau disputes manager or director** (the champion); add the head of ops or the COO where possible. Firms should have an estimated 500-5,000 disputes a month and an in-house team. Do not call BPOs or vendors in this round. Source the calls from the founders' Capital One, Barclays and Tepper networks and from LinkedIn job titles (for example "Credit Bureau Disputes"). The calls are 45 min, framed as research rather than a pitch, and nothing confidential is solicited. Show no demo until question 14.
+**Date:** 2026-10-19  **Owner:** product-manager  **Goal:** confirm or kill the wedge in `icp-and-wedge-memo.md` (resolves U1, U4, U5, U7, U9, U13, U14, U16, U17, U18; Phase 2 also adds the U29-U31 practitioner checks in PRD §12). **Target finish:** ~~2026-11-27~~ to be set when Phase 2 starts.
+
+**Who to call:** 4 fintech/online lenders, 3 independent auto finance companies, 3 regional banks ($10-100B, the control group). Talk to the **credit bureau disputes manager or director** (the champion); add the head of ops or the COO where possible. Firms should have an estimated 500-5,000 disputes a month and an in-house team. Do not call BPOs or vendors in this round. Source the calls from Sriram's professional and Tepper networks, public sources and LinkedIn job titles (for example "Credit Bureau Disputes"), excluding any current or former employer's confidential information or relationships. The calls are 45 min, framed as research rather than a pitch, and nothing confidential is solicited. Show no demo until question 14.
 
 ## Question guide (ask for numbers, not opinions)
 **Current process**

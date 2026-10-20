@@ -1,6 +1,7 @@
 # ICP and Wedge Decision Memo
 
-**Date:** 2026-10-19  **Owner:** product-manager  **Status:** PROPOSED. The founders must confirm the segment and the pricing hypothesis (DECISIONS.md, 2026-10-19 rows).
+**Date:** 2026-10-19  **Owner:** product-manager  **Status:** Segment, channel and category **DECIDED by Sriram (2026-10-19)**, on desk evidence only. Pricing hypothesis remains PROPOSED and its test is **deferred to Phase 2**.
+**v1.1 note (2026-10-19, Sriram decisions):** Sriram is the sole founder. **Phase 1 runs with no interviews**, so every hypothesis in this memo (segment, buyer roles, pricing, e-OSCAR sponsorship, LLM-hosting tolerance, payment history's share of volume) stays **untested through Phase 1**. The Phase 1 prototype can show only that the investigation, citation and audit loop works on synthetic data with measured safety behaviour (PRD v1.1, "What Phase 1 can and cannot prove"). The "first 10 calls" section below is the **Phase 2** test. The six-month pilot timing in "Options considered" was based on human-engineer estimates and no longer applies; Phase 1 calendar time is unknown (U28). The Reg V fallback clock is proposed to start at Phase 2 discovery. No price may be quoted before the evidence bar in PRD §12.
 **Inputs:** `docs/research/wedge-segments-and-buyers.md` (WSB), `competitive-landscape.md` (CL), `regulatory-and-enforcement-landscape.md` (REG), `docs/engineering/feasibility-core-loop.md` (FEAS).
 
 ## Recommendation
@@ -82,5 +83,5 @@ This expansion is what turns a base SAM of about $41M (WSB, assumption-heavy) in
 5. **Payment history's share of volume is unknown** (new U18).
 6. **AI appetite is low:** only 27-32% of furnishers want more automation (C/B). Position the product on defensibility, not autonomy.
 
-## What the first 10 calls must prove or kill
+## What the first 10 calls must prove or kill (Phase 2; deferred 2026-10-19)
 These are detailed in `discovery-plan.md`. The calls must **prove**, at 4 or more of the 7 nonbank calls: volume of 500 or more a month, dispute quality ranked among the top 3 ops pains, and a hosted zero-retention LLM acceptable. They must also show at least 2 firms willing to sponsor e-OSCAR Stage or share the developer guide, and at least 3 firms whose acceptable price range includes the hypothesis. **Kill or pivot** if any of these holds: 5 or more of the 7 have already bought a solution (BPO or tool); acceptable WTP is under $1 per dispute; 5 or more of the 7 ban PII to a hosted LLM; or none will share e-OSCAR access. The last case triggers the Reg V fallback.

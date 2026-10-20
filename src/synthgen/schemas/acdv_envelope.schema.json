@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "synthetic-acdv-envelope-0.1.0",
+  "title": "PLACEHOLDER ACDV fixture envelope (NOT the e-OSCAR schema; U6 unverified)",
+  "type": "object",
+  "required": [
+    "synthetic",
+    "fixture_schema_version",
+    "generator_version",
+    "seed",
+    "case_id",
+    "fixture_meta",
+    "acdv"
+  ],
+  "properties": {
+    "synthetic": {
+      "const": true,
+      "description": "Every record is synthetic. A false or missing value is a schema violation."
+    },
+    "fixture_schema_version": {
+      "const": "placeholder-acdv-0.1.0"
+    },
+    "generator_version": {
+      "type": "string"
+    },
+    "seed": {
+      "type": "integer"
+    },
+    "case_id": {
+      "type": "string"
+    },
+    "fixture_meta": {
+      "type": "object",
+      "required": [
+        "ingest_date"
+      ],
+      "properties": {
+        "ingest_date": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        }
+      }
+    },
+    "acdv": {
+      "type": "object",
+      "required": [
+        "synthetic",
+        "fixture_schema_version",
+        "control_number",
+        "cra",
+        "date_received",
+        "dispute_codes",
+        "free_text",
+        "attachments",
+        "consumer"
+      ],
+      "properties": {
+        "synthetic": {
+          "const": true,
+          "description": "Every record is synthetic. A false or missing value is a schema violation."
+        },
+        "fixture_schema_version": {
+          "const": "placeholder-acdv-0.1.0"
+        },
+        "control_number": {
+          "type": "string"
+        },
+        "cra": {
+          "type": "string",
+          "pattern": "^SYNTH-CRA-"
+        },
+        "date_received": {
+          "type": "string"
+        },
+        "response_due_date": {
+          "type": "string"
+        },
+        "account_number": {
+          "type": "string",
+          "pattern": "^SYNACCT\\d{10}$"
+        },
+        "consumer": {
+          "type": "object",
+          "required": [
+            "synthetic",
+            "first_name",
+            "last_name",
+            "ssn",
+            "dob",
+            "address"
+          ],
+          "properties": {
+            "synthetic": {
+              "const": true,
+              "description": "Every record is synthetic. A false or missing value is a schema violation."
+            },
+            "ssn": {
+              "type": "string",
+              "pattern": "^9\\d\\d-00-\\d{4}$"
+            },
+            "address": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "const": "ZZ"
+                },
+                "zip": {
+                  "type": "string",
+                  "pattern": "^000\\d\\d$"
+                }
+              }
+            }
+          }
+        },
+        "dispute_codes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^PLH-"
+          }
+        },
+        "disputed_months": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}$"
+          }
+        },
+        "free_text": {
+          "type": "string"
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "synthetic",
+              "attachment_id",
+              "file_name",
+              "media_type",
+              "page_count",
+              "extracted_text",
+              "sha256",
+              "metadata",
+              "render_hints"
+            ],
+            "properties": {
+              "synthetic": {
+                "const": true,
+                "description": "Every record is synthetic. A false or missing value is a schema violation."
+              },
+              "attachment_id": {
+                "type": "string"
+              },
+              "file_name": {
+                "type": "string"
+              },
+              "media_type": {
+                "type": "string"
+              },
+              "page_count": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "extracted_text": {
+                "type": "string"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "metadata": {
+                "type": "object"
+              },
+              "render_hints": {
+                "type": "object",
+                "required": [
+                  "hidden_spans"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

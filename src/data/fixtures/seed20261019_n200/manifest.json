@@ -1,0 +1,88 @@
+{
+  "banner": "SYNTHETIC TEST DATA - NOT REAL PEOPLE, ACCOUNTS OR BUREAU RECORDS. Placeholder schema and codes (U6).",
+  "files_sha256": {
+    "acdvs.jsonl": "c3dee67e449cffe2c9e9fbea78b03f58b503cbe65c4620cfba2a25fa030d9a6d",
+    "labels.jsonl": "7d72532a2f75b879cf08347b451b2df7d59b063d5cf6963c53bec3c5a70afeb0",
+    "sor_accounts.jsonl": "897272aeb9b95f469a017b0df0576987ee07a9b4977f299e5fc4c479d83950a7"
+  },
+  "fixture_schema_version": "placeholder-acdv-0.1.0",
+  "generator_version": "0.1.0",
+  "reference_tables": {
+    "dispute_code_map": {
+      "verified": false,
+      "version": "0.1.0"
+    },
+    "holiday_calendar": {
+      "verified": false,
+      "version": "0.1.0"
+    },
+    "payment_rating_map": {
+      "verified": false,
+      "version": "0.1.0"
+    },
+    "time_zone": {
+      "verified": false,
+      "version": "0.1.0"
+    }
+  },
+  "seed": 20261019,
+  "summary": {
+    "adversarial_count": 22,
+    "adversarial_share": 0.11,
+    "adversarial_tags": {
+      "identity_fraud_disguised": 10,
+      "injection_acdv_free_text": 2,
+      "injection_file_metadata": 1,
+      "injection_hidden_text": 2,
+      "injection_letter_body": 2,
+      "injection_tool_syntax": 1,
+      "pii_bait": 4
+    },
+    "categories": {
+      "BALANCE": 18,
+      "BALANCE+PAYMENT_HISTORY": 7,
+      "IDENTITY_FRAUD": 10,
+      "OTHER": 6,
+      "PAYMENT_HISTORY": 159
+    },
+    "claims_total": 247,
+    "edge_case_count": 62,
+    "edge_case_share": 0.31,
+    "edge_tags": {
+      "conflicting_records": 10,
+      "deadline_breached": 4,
+      "deadline_on_holiday": 2,
+      "deferral_or_hardship": 10,
+      "doc_unreadable": 4,
+      "duplicate": 4,
+      "malformed_input": 8,
+      "missing_document": 4,
+      "missing_records": 8,
+      "months_undetermined": 4,
+      "multi_issue": 6,
+      "near_deadline": 4,
+      "repeat": 4
+    },
+    "escalation_reasons": {
+      "BREACHED": 4,
+      "CLAIM_UNRESOLVED": 14,
+      "CLASS_CONFLICT": 4,
+      "DOC_UNREADABLE": 4,
+      "EVIDENCE_CONFLICT": 10,
+      "EVIDENCE_MISSING": 8,
+      "ID_FRAUD_SUSPECTED": 10,
+      "INTAKE_INVALID": 8,
+      "MONTHS_UNDETERMINED": 4,
+      "MULTI_ISSUE": 6
+    },
+    "n_cases": 200,
+    "outcomes": {
+      "DUPLICATE_IGNORED": 4,
+      "ESCALATED": 72,
+      "MODIFY": 30,
+      "OUT_OF_SCOPE": 20,
+      "VERIFIED_AS_REPORTED": 74
+    }
+  },
+  "synthetic": true
+}

@@ -7,7 +7,7 @@ An AI-native platform that helps data furnishers (banks, card issuers, lenders) 
 
 Parked for later: a broader context-check and audit layer for banking AI agents (dispute resolution and loan decisions are the entry points). Not in scope now; keep the architecture from precluding it.
 
-Founders: Sriram (product, AWS Security PM, prior credit-bureau-reporting engine work at Capital One) and Navneet (product/finance, Capital One card acquisition, ex-Barclays credit risk).
+Founder: Sriram (sole founder since 2026-10-19; product, AWS Security PM, prior credit-bureau-reporting engine work at Capital One). Wherever these docs say "founders", read Sriram.
 
 Stage: pre-product. Goal right now: find out whether this is a real, fundable wedge, then get to a credible MVP and a design-partner pilot fast.
 
@@ -26,7 +26,7 @@ Run the whole team on a goal with `/run-team <goal>`.
 3. **Stay in your lane, flag across lanes.** If research changes the plan, tell the PM; don't rewrite the PRD. If a requirement is technically unrealistic, tell the PM; don't silently descope.
 4. **Decisions are logged** in `docs/DECISIONS.md` (date, decision, why, who decided).
 5. **Unknowns are tracked** in `docs/UNKNOWNS.md`. Add what you discover; resolve what you can with a source.
-6. **The founders decide.** Agents recommend. Anything touching legal exposure, pricing, hiring, fundraising, or customer commitments goes to Sriram or Navneet.
+6. **The founder decides.** Agents recommend. Anything touching legal exposure, pricing, hiring, fundraising, or customer commitments goes to Sriram, the sole founder.
 
 ## Quality standards for every agent
 - Separate **facts** (sourced and graded), **assumptions** (labelled, with a test), and **opinions** (labelled).
@@ -59,7 +59,7 @@ src/                       code
 ```
 
 ## Current priorities (update as they change)
-1. Validate the wedge: which furnisher segment feels dispute pain most acutely, who owns the budget, and will they pay (resolve U1, U4, U5).
-2. Settle the e-OSCAR access and automation question and the regulatory defensibility of AI-assisted investigations (U2, U3).
-3. Define a narrow MVP around one dispute type and one buyer, with a developer feasibility sign-off.
-4. Prove the core loop (intake, classify, investigate, draft, human review, audit record) on synthetic data with a measured eval baseline.
+1. **Phase 1 (now, no interviews, desk research only):** prove the core loop (intake, classify, investigate, cited draft, human review, audit record) on synthetic data with a measured eval baseline, per PRD v1.1 (`docs/product/prd-mvp-v0.md`). The developer agent builds in stages; **only Stage 0 (ADR-001 to 010 and the synthetic generator with fixtures) is approved**; each later stage needs Sriram's written approval.
+2. Meet the Phase 1 exit gate (PRD §12). It is a technical go/no-go only and is not evidence for pricing, a pilot or hiring.
+3. **Phase 2 (deferred):** validate the wedge, budget owner and willingness to pay (U1, U4, U5, U17), e-OSCAR sponsorship (U2) and LLM-hosting tolerance (U7) via `docs/product/discovery-plan.md`; practitioner checks (U20, U29, U31).
+4. Before any real data, pilot or compliance claim: FCRA counsel engaged, and the regulatory defensibility of AI-assisted investigations reviewed (U3, U10).

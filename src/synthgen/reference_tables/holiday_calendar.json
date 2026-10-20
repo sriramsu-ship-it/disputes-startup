@@ -1,0 +1,144 @@
+{
+  "table_id": "holiday_calendar",
+  "table_version": "0.1.0",
+  "synthetic_placeholder": true,
+  "verified": false,
+  "source": "https://www.law.cornell.edu/uscode/text/5/6103",
+  "source_note": "Holiday LIST is from 5 USC 6103(a) (A-grade, verified 2026-10-19). Whether CRAs, e-OSCAR or furnishers use this calendar for ACDV due dates is UNVERIFIED (U21). Sunday observance is an assumption.",
+  "effective_from": "2026-01-01",
+  "effective_to": "2027-12-31",
+  "entries": [
+    {
+      "name": "New Year's Day",
+      "date": "2026-01-01",
+      "observed_date": "2026-01-01",
+      "observance_rule": "as listed"
+    },
+    {
+      "name": "Birthday of Martin Luther King, Jr.",
+      "date": "2026-01-19",
+      "observed_date": "2026-01-19",
+      "observance_rule": "as listed"
+    },
+    {
+      "name": "Washington's Birthday",
+      "date": "2026-02-16",
+      "observed_date": "2026-02-16",
+      "observance_rule": "as listed"
+    },
+    {
+      "name": "Memorial Day",
+      "date": "2026-05-25",
+      "observed_date": "2026-05-25",
+      "observance_rule": "as listed"
+    },
+    {
+      "name": "Juneteenth National Independence Day",
+      "date": "2026-06-19",
+      "observed_date": "2026-06-19",
+      "observance_rule": "as listed"
+    },
+    {
+      "name": "Independence Day",
+      "date": "2026-07-04",
+      "observed_date": "2026-07-03",
+      "observance_rule": "Saturday -> preceding Friday (5 USC 6103(b))"
+    },
+    {
+      "name": "Labor Day",
+      "date": "2026-09-07",
+      "observed_date": "2026-09-07",
+      "observance_rule": "as listed"
+    },
+    {
+      "name": "Columbus Day",
+      "date": "2026-10-12",
+      "observed_date": "2026-10-12",
+      "observance_rule": "as listed"
+    },
+    {
+      "name": "Veterans Day",
+      "date": "2026-11-11",
+      "observed_date": "2026-11-11",
+      "observance_rule": "as listed"
+    },
+    {
+      "name": "Thanksgiving Day",
+      "date": "2026-11-26",
+      "observed_date": "2026-11-26",
+      "observance_rule": "as listed"
+    },
+    {
+      "name": "Christmas Day",
+      "date": "2026-12-25",
+      "observed_date": "2026-12-25",
+      "observance_rule": "as listed"
+    },
+    {
+      "name": "New Year's Day",
+      "date": "2027-01-01",
+      "observed_date": "2027-01-01",
+      "observance_rule": "as listed"
+    },
+    {
+      "name": "Birthday of Martin Luther King, Jr.",
+      "date": "2027-01-18",
+      "observed_date": "2027-01-18",
+      "observance_rule": "as listed"
+    },
+    {
+      "name": "Washington's Birthday",
+      "date": "2027-02-15",
+      "observed_date": "2027-02-15",
+      "observance_rule": "as listed"
+    },
+    {
+      "name": "Memorial Day",
+      "date": "2027-05-31",
+      "observed_date": "2027-05-31",
+      "observance_rule": "as listed"
+    },
+    {
+      "name": "Juneteenth National Independence Day",
+      "date": "2027-06-19",
+      "observed_date": "2027-06-18",
+      "observance_rule": "Saturday -> preceding Friday (5 USC 6103(b))"
+    },
+    {
+      "name": "Independence Day",
+      "date": "2027-07-04",
+      "observed_date": "2027-07-05",
+      "observance_rule": "Sunday -> following Monday (ASSUMPTION: not stated in 6103(b); executive-order practice, unverified)"
+    },
+    {
+      "name": "Labor Day",
+      "date": "2027-09-06",
+      "observed_date": "2027-09-06",
+      "observance_rule": "as listed"
+    },
+    {
+      "name": "Columbus Day",
+      "date": "2027-10-11",
+      "observed_date": "2027-10-11",
+      "observance_rule": "as listed"
+    },
+    {
+      "name": "Veterans Day",
+      "date": "2027-11-11",
+      "observed_date": "2027-11-11",
+      "observance_rule": "as listed"
+    },
+    {
+      "name": "Thanksgiving Day",
+      "date": "2027-11-25",
+      "observed_date": "2027-11-25",
+      "observance_rule": "as listed"
+    },
+    {
+      "name": "Christmas Day",
+      "date": "2027-12-25",
+      "observed_date": "2027-12-24",
+      "observance_rule": "Saturday -> preceding Friday (5 USC 6103(b))"
+    }
+  ]
+}

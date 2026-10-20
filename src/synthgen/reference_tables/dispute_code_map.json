@@ -1,0 +1,16 @@
+{
+  "table_id": "dispute_code_map",
+  "table_version": "0.1.0",
+  "synthetic_placeholder": true,
+  "verified": false,
+  "source": "NONE - invented placeholder codes",
+  "source_note": "These codes are INVENTED for synthetic fixtures. They are deliberately not shaped like real e-OSCAR/ACDV dispute codes. The real code list and its mapping to categories are unverified (U6) and must replace this table before any non-synthetic run (R-35).",
+  "entries": [
+    {"code": "PLH-PH-01", "description": "PLACEHOLDER: consumer disputes payment history / late payment reporting", "categories": ["PAYMENT_HISTORY"]},
+    {"code": "PLH-PH-02", "description": "PLACEHOLDER: consumer states account was never late", "categories": ["PAYMENT_HISTORY"]},
+    {"code": "PLH-BAL-01", "description": "PLACEHOLDER: consumer disputes current balance or amount", "categories": ["BALANCE"]},
+    {"code": "PLH-ST-01", "description": "PLACEHOLDER: consumer disputes account status", "categories": ["ACCOUNT_STATUS"]},
+    {"code": "PLH-ID-01", "description": "PLACEHOLDER: consumer states account is not theirs / identity theft", "categories": ["IDENTITY_FRAUD"]},
+    {"code": "PLH-OT-01", "description": "PLACEHOLDER: other dispute (address, dates, name)", "categories": ["OTHER"]}
+  ]
+}

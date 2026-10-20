@@ -1,0 +1,9 @@
+{
+  "table_id": "time_zone",
+  "table_version": "0.1.0",
+  "synthetic_placeholder": true,
+  "verified": false,
+  "source": "PRD v1.1 R-05 placeholder",
+  "source_note": "End-of-day evaluation zone for due dates. America/New_York is a PRD placeholder chosen to err early; which zone CRAs/e-OSCAR use is unverified (U21).",
+  "entries": [{"key": "due_date_end_of_day_zone", "value": "America/New_York"}]
+}

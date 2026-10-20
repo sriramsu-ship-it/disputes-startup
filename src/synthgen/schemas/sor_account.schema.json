@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "synthetic-sor-account-0.1.0",
+  "title": "Mock system-of-record account (SYNTHETIC)",
+  "type": "object",
+  "required": [
+    "synthetic",
+    "tenant_id",
+    "account_number",
+    "furnisher",
+    "product",
+    "open_date",
+    "cycle_day",
+    "scheduled_payment",
+    "consumer",
+    "cycles",
+    "transactions",
+    "notes",
+    "free_text_notes"
+  ],
+  "properties": {
+    "synthetic": {
+      "const": true,
+      "description": "Every record is synthetic. A false or missing value is a schema violation."
+    },
+    "tenant_id": {
+      "const": "synthetic-tenant-0"
+    },
+    "account_number": {
+      "type": "string",
+      "pattern": "^SYNACCT\\d{10}$"
+    },
+    "furnisher": {
+      "type": "string",
+      "pattern": "\\(SYNTHETIC\\)$"
+    },
+    "product": {
+      "enum": [
+        "UNSECURED_INSTALLMENT",
+        "CREDIT_CARD"
+      ]
+    },
+    "cycles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "cycle_month",
+          "cycle_date",
+          "dpd_at_cycle",
+          "reported_rating",
+          "balance"
+        ],
+        "properties": {
+          "cycle_month": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}$"
+          },
+          "cycle_date": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "dpd_at_cycle": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "reported_rating": {
+            "type": "string",
+            "pattern": "^PH_"
+          },
+          "balance": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "transactions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "txn_id",
+          "posted_date",
+          "type",
+          "amount",
+          "synthetic"
+        ],
+        "properties": {
+          "synthetic": {
+            "const": true,
+            "description": "Every record is synthetic. A false or missing value is a schema violation."
+          },
+          "posted_date": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "note_id",
+          "type",
+          "start_date",
+          "end_date",
+          "synthetic"
+        ],
+        "properties": {
+          "synthetic": {
+            "const": true,
+            "description": "Every record is synthetic. A false or missing value is a schema violation."
+          },
+          "type": {
+            "enum": [
+              "HARDSHIP",
+              "DEFERRAL",
+              "FORBEARANCE",
+              "PRIOR_DISPUTE",
+              "OTHER"
+            ]
+          },
+          "start_date": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "end_date": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          }
+        }
+      }
+    },
+    "free_text_notes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "note_id",
+          "text",
+          "synthetic"
+        ],
+        "properties": {
+          "synthetic": {
+            "const": true,
+            "description": "Every record is synthetic. A false or missing value is a schema violation."
+          }
+        }
+      }
+    }
+  }
+}

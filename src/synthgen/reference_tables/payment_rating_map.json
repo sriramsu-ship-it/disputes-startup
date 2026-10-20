@@ -1,0 +1,17 @@
+{
+  "table_id": "payment_rating_map",
+  "table_version": "0.1.0",
+  "synthetic_placeholder": true,
+  "verified": false,
+  "source": "NONE - invented placeholder rating labels and DPD buckets",
+  "source_note": "Rating labels (PH_R0_CURRENT etc.) are INVENTED and are NOT Metro 2 values. The DPD bucket boundaries are also unverified. The real mapping comes from the CDIA Credit Reporting Resource Guide via a design partner and must replace this table before any non-synthetic run (R-09, R-35).",
+  "entries": [
+    {"rating": "PH_R0_CURRENT", "dpd_min": 0,   "dpd_max": 29},
+    {"rating": "PH_R30",        "dpd_min": 30,  "dpd_max": 59},
+    {"rating": "PH_R60",        "dpd_min": 60,  "dpd_max": 89},
+    {"rating": "PH_R90",        "dpd_min": 90,  "dpd_max": 119},
+    {"rating": "PH_R120",       "dpd_min": 120, "dpd_max": 149},
+    {"rating": "PH_R150",       "dpd_min": 150, "dpd_max": 179},
+    {"rating": "PH_R180P",      "dpd_min": 180, "dpd_max": 99999}
+  ]
+}

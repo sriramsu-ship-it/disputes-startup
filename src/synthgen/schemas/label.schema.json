@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "synthetic-label-0.1.0",
+  "title": "Generator-intent labels (T1-style; NOT human gold; never shown to the T3 labeller)",
+  "type": "object",
+  "required": [
+    "synthetic",
+    "case_id",
+    "label_source",
+    "generator_version",
+    "scenario",
+    "categories",
+    "claims",
+    "gold",
+    "suspicious_expected",
+    "edge_tags",
+    "adversarial_tags",
+    "other_tags"
+  ],
+  "properties": {
+    "synthetic": {
+      "const": true,
+      "description": "Every record is synthetic. A false or missing value is a schema violation."
+    },
+    "label_source": {
+      "const": "generator_intent"
+    },
+    "categories": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "PAYMENT_HISTORY",
+          "BALANCE",
+          "ACCOUNT_STATUS",
+          "IDENTITY_FRAUD",
+          "OTHER"
+        ]
+      },
+      "minItems": 1
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "claim_id",
+          "quote",
+          "claim_type",
+          "months",
+          "finding",
+          "evidence_basis",
+          "source",
+          "span"
+        ],
+        "properties": {
+          "claim_type": {
+            "enum": [
+              "DATE",
+              "AMOUNT",
+              "PAYMENT_EVENT",
+              "ACCOUNT_STATUS",
+              "AGREEMENT"
+            ]
+          },
+          "finding": {
+            "enum": [
+              "SUPPORTED",
+              "CONTRADICTED",
+              "NOT_ADDRESSABLE"
+            ]
+          },
+          "months": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}$"
+            }
+          },
+          "span": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "minItems": 2,
+            "maxItems": 2
+          }
+        }
+      }
+    },
+    "gold": {
+      "type": "object",
+      "required": [
+        "outcome",
+        "escalation_reasons"
+      ],
+      "properties": {
+        "outcome": {
+          "enum": [
+            "VERIFIED_AS_REPORTED",
+            "MODIFY",
+            "ESCALATED",
+            "OUT_OF_SCOPE",
+            "DUPLICATE_IGNORED"
+          ]
+        },
+        "escalation_reasons": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "INTAKE_INVALID",
+              "DOC_UNREADABLE",
+              "BREACHED",
+              "CLASS_CONFLICT",
+              "ID_FRAUD_SUSPECTED",
+              "MULTI_ISSUE",
+              "MONTHS_UNDETERMINED",
+              "EVIDENCE_MISSING",
+              "EVIDENCE_CONFLICT",
+              "CLAIM_UNRESOLVED",
+              "QUOTE_UNLOCATED",
+              "UNADDRESSED_CLAIM",
+              "DRAFT_INVALID",
+              "LLM_UNAVAILABLE"
+            ]
+          }
+        }
+      }
+    },
+    "suspicious_expected": {
+      "enum": [
+        "NONE",
+        "LOW",
+        "HIGH"
+      ]
+    },
+    "edge_tags": {
+      "type": "array"
+    },
+    "adversarial_tags": {
+      "type": "array"
+    }
+  }
+}
