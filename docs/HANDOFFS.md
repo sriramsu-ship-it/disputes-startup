@@ -23,13 +23,13 @@ Format:
 - Produced: `CLAUDE.md`
 - Need back: problem brief and a first-cut ICP hypothesis, to be pressure-tested against research when it lands.
 - Open questions: none
-- Status: OPEN
+- Status: RESOLVED 2026-10-19 by product-manager: problem and value hypothesis in docs/product/icp-and-wedge-memo.md and PRD §1; ICP pressure-tested against research
 
 ## 2026-10-19 | developer -> product-manager | Feasibility note: MVP core loop
 - Produced: `docs/engineering/feasibility-core-loop.md`, `docs/engineering/STATUS.md`; updated `docs/UNKNOWNS.md` (U2 partly resolved; added U6-U10)
 - Need back: answers to the 9 questions in section 9 of the note, mainly the first channel (ACDV vs Reg V direct) and dispute category, the pilot deployment model and LLM hosting constraint, the review policy, Metro 2 in or out, and the eval go/no-go thresholds. These are inputs to the PRD and to ADRs 001-010.
 - Open questions: (1) Which channel and single dispute category go first? (2) Our SaaS or the customer's cloud for the pilot? (3) Is a hosted LLM with zero retention acceptable? (4) Is 100% human review in the MVP? (5) Metro 2/AUD in or out? (6) Eval thresholds? (7) Audit retention period and export format? (8) Can a design partner sponsor e-OSCAR Stage access and share the middleware-vendor requirements? (9) Who verifies deadlines and code lists with counsel?
-- Status: OPEN (answered 2026-10-19 by product-manager in docs/product/prd-mvp-v0.md Appendix A/B; awaiting founder confirmation of Q1-Q4, Q6-Q9 and developer review per the new handoff below)
+- Status: RESOLVED 2026-10-19 (all 9 answered in PRD v1 Appendix A/B and reviewed by developer; founder confirmations now tracked in docs/product/founder-decisions.md). Earlier note: (answered 2026-10-19 by product-manager in docs/product/prd-mvp-v0.md Appendix A/B; awaiting founder confirmation of Q1-Q4, Q6-Q9 and developer review per the new handoff below)
 
 ## 2026-10-19 | market-research -> product-manager | Wedge, competition, regulatory evidence for ICP memo and MVP PRD
 - Produced: `docs/research/wedge-segments-and-buyers.md`, `docs/research/competitive-landscape.md`, `docs/research/regulatory-and-enforcement-landscape.md`; updated `docs/UNKNOWNS.md` (U1, U4, U5 refined; U2 note; U11-U16 added) and the Verification Log in `docs/reference/furnisher-dispute-primer.md` (10 rows).
@@ -71,4 +71,19 @@ Format:
 - Effort: **10-12 weeks with 2 engineers, 18-21 weeks with 1** (was 5-7 / 8-12), plus about 100-130 founder labelling hours. The PRD as written adds 3-5 engineer-weeks. Ranked cuts are in review §5 (to about 9-10 weeks with 2 engineers). **The 1-engineer path is too slow for the 90-day e-OSCAR-sponsor fallback clock. I recommend 2 engineers.**
 - Need back: apply or reject the 18 changes in review §8 (paste-ready), including the Appendix B rewrite and the §14 sign-off text. Take the tiered eval design to the founders with PRD Q3. Answer U21 (business-day calendar and time zone) with counsel or a design partner.
 - Open questions: (1) Do the founders accept tiered evals in place of the 200-case floors? (2) Do you accept the mock SoR supplying DPD for each month (R-09)? (3) Should R-19 become Must for DELETE? (4) Do you accept the new ADR-011 to 013?
+- Status: RESOLVED 2026-10-19 by product-manager: PRD v1 applies changes 1-13 and 15-18 in full and 14 in part; answers (1) taken to founders as PRD Q3 / founder-decisions.md #4, (2) yes, (3) yes, and also for HIGH suspicious content, (4) yes. U21 placeholder set in R-05 and added to counsel questions. See the PM -> developer entry below for the one change not fully applied.
+
+## 2026-10-19 | product-manager -> developer | PRD v1: your review applied; one change applied in part
+- Produced: `docs/product/prd-mvp-v0.md` (v1, change log at top; §14 filled; Appendix B rewritten as tiers T0-T3 with go/no-go rules B1-B17); DECISIONS.md rows revised; UNKNOWNS.md U8, U20, U21, U24 notes, U26-U27 added.
+- **Declined in part: REV §8 #14, over-escalation as report-only.** I keep it as a tolerance gate on synthetic T3 (point ≤20%, CI reported; >30% after 2 iterations is a kill). Reason: it is the only metric that stops "escalate everything" from passing B2-B4. It makes no real-data claim. If you think the synthetic estimate is too generator-controlled to gate on, propose a fix (e.g. a fixed clean-case mix in T1) rather than dropping it.
+- Also note: claim recall <90% is a no-go (stricter than your report-only); new IDs R-30 to R-36 for your missing NFRs; T1 now has a ≥200 clean should-verify stratum and ≥150 fraud stratum; B5 compares each injection variant with a clean twin.
+- Need back: confirm the T1 strata and B5 twin design are buildable inside your 2.0-2.5 eng-week R-26 estimate, or give the delta. Hold the build past ADRs and generator v0 until the founders clear decision 0 and Q1-Q3 in `docs/product/founder-decisions.md`.
+- Open questions: none blocking.
+- Status: OPEN
+
+## 2026-10-19 | product-manager -> founders | PRD v1 ready: decisions needed
+- Produced: `docs/product/founder-decisions.md` (one-page brief: 8 decisions ordered by urgency, next 7 days, go / not-yet), `docs/product/prd-mvp-v0.md` v1 (developer-reviewed), `docs/product/icp-and-wedge-memo.md` (timeline note), DECISIONS.md (PROPOSED rows), UNKNOWNS.md (U26-U27).
+- Need back: **first, decision 0** (each founder checks his own employment, invention-assignment and conflict-of-interest terms; gating; not legal advice). Then decisions 1-4 by 2026-10-26, team size by 2026-11-02, counsel engagement by 2026-11-09. Tell the PM the outcomes so the DECISIONS rows move to DECIDED.
+- Recommendation: NOT YET on hiring and build start; GO on discovery calls, ADRs and the synthetic generator once decision 0 clears. Flip criteria are in the brief.
+- Open questions: none beyond the brief.
 - Status: OPEN

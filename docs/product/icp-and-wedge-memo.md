@@ -28,7 +28,7 @@
 | Credit unions over $500M | 3 | 1 | 3 | 2 | 3 | 12 |
 | Collectors | 3 | 1 | 4 | 1 | 3 | 12 |
 
-Fintech wins on speed to buy and LLM tolerance. Both factors are assumptions, and they are what make a pilot achievable inside six months. Regional banks score close behind because of the founders' bank network and a CFPB focus that is moving toward banks (WSB #7, B). They lose on vendor-risk and model-risk friction.
+Fintech wins on speed to buy and LLM tolerance. Both factors are assumptions, and they are what make a pilot achievable inside six months. **Updated 2026-10-19 after the developer's review (`docs/engineering/prd-feasibility-review.md` §4):** the prototype now takes 10-12 weeks with 2 engineers (18-21 with 1) from the engineers' start, plus 2 weeks of practitioner sessions. A shadow pilot can start inside six months **only on the 2-engineer path and only if hiring takes about 4-6 weeks or less** [A]. On the 1-engineer path it cannot. This does not change the segment ranking; it makes speed to buy matter more. Regional banks score close behind because of the founders' bank network and a CFPB focus that is moving toward banks (WSB #7, B). They lose on vendor-risk and model-risk friction.
 
 | Channel | Why / why not |
 |---|---|
@@ -45,7 +45,7 @@ Fintech wins on speed to buy and LLM tolerance. Both factors are assumptions, an
 
 ## Value hypothesis
 **For** the credit bureau disputes manager at a fintech or online lender handling 500-5,000 disputes a month, **who** must complete a reasonable investigation of every ACDV before the CRA's deadline with a small team working in the e-OSCAR UI and spreadsheets, **our product** produces an evidence-cited investigation and a ready-to-approve response for payment-history disputes, plus a tamper-evident record of why each response was given, **unlike** the e-OSCAR UI, spreadsheets, or workflow tools such as PMG Case Central, which route cases but do not reason over evidence or record why.
-**Proof metrics:** specialist minutes per in-scope dispute (target a 40% reduction), false-verify rate (guardrail), and the share of cases whose record a compliance officer accepts without rework.
+**Proof metrics:** specialist minutes per in-scope dispute (target a 40% reduction), false-verify rate (guardrail; on synthetic data the MVP can support ≤0.5% only via the tiered eval in PRD Appendix B, and makes no real-data claim until the pilot), and the share of cases whose record a compliance officer accepts without rework.
 
 ## Pricing hypothesis (ASSUMPTION; the founders decide)
 **Platform fee of $30K a year (the floor) plus $3 per dispute processed.** At 1,000-2,000 disputes a month that is an ACV of **$66-102K**, which sits inside the research range of $60-150K (WSB, assumption-grade).
