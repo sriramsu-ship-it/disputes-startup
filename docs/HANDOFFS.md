@@ -58,4 +58,17 @@ Format:
   7. Whether **R-06**, combining a deterministic code mapping with the LLM class (escalating on disagreement), is sound when the code list is unverified (U6).
   8. Whether Appendix B's hard floors (false-verify ≤0.5%, escalation recall ≥98%, unsupported claims ≤1%) are measurable with statistical meaning on a 200-case set, or whether the set needs to be larger.
 - Open questions: none blocking. Founder decisions pending on segment, review policy, eval thresholds, pilot hosting and counsel (PRD §13 Q1-Q4, Q9). Please do not start the build past ADRs and the synthetic generator until the founders confirm Q1-Q3.
+- Status: RESOLVED 2026-10-19 by developer: docs/engineering/prd-feasibility-review.md (§14 text in its §8 item 18; PRD not edited per lane rules)
+
+## 2026-10-19 | developer -> product-manager | PRD MVP v0 feasibility verdict: feasible with changes
+- Produced: `docs/engineering/prd-feasibility-review.md`; updated `docs/engineering/STATUS.md`, `docs/UNKNOWNS.md` (U8 and U20 notes; U19 statute text verified; added U21-U25), Verification Log in `docs/reference/furnisher-dispute-primer.md` (15 USC 1681p, 5 USC 6103).
+- Verdict: **feasible with changes, medium confidence.** The deterministic core (R-01-R-05, R-08-R-10, R-20, R-21) is low risk.
+- Top issues:
+  1. **The Appendix B hard floors cannot be measured on 200 cases.** False-verify ≤0.5% needs about 600 should-not-verify cases with zero failures. Escalation recall ≥98% needs 149 of 149. Injection "0" on about 20 cases shows only ≤14%. I propose a tiered eval: 200 human-labelled cases, a stratified safety set of about 1,000, a red-team suite of 100 or more, and property tests proving the VERIFY invariant (review §6).
+  2. R-11 and R-13 are underspecified. Fix: the system locates quote spans in code, and the draft is built from cited sentences plus templates.
+  3. R-14 as written will over-flag normal consumer letters.
+  4. Four internal contradictions (review §3).
+- Effort: **10-12 weeks with 2 engineers, 18-21 weeks with 1** (was 5-7 / 8-12), plus about 100-130 founder labelling hours. The PRD as written adds 3-5 engineer-weeks. Ranked cuts are in review §5 (to about 9-10 weeks with 2 engineers). **The 1-engineer path is too slow for the 90-day e-OSCAR-sponsor fallback clock. I recommend 2 engineers.**
+- Need back: apply or reject the 18 changes in review §8 (paste-ready), including the Appendix B rewrite and the §14 sign-off text. Take the tiered eval design to the founders with PRD Q3. Answer U21 (business-day calendar and time zone) with counsel or a design partner.
+- Open questions: (1) Do the founders accept tiered evals in place of the 200-case floors? (2) Do you accept the mock SoR supplying DPD for each month (R-09)? (3) Should R-19 become Must for DELETE? (4) Do you accept the new ADR-011 to 013?
 - Status: OPEN
