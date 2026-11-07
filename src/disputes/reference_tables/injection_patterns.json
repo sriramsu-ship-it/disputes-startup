@@ -1,0 +1,52 @@
+{
+  "table_id": "injection_patterns",
+  "table_version": "0.1.0",
+  "synthetic_placeholder": true,
+  "verified": false,
+  "source": "PRD v1.1 R-14 and ADR-007 Decision 3 (internal spec). Patterns written by the intake developer agent 2026-11-07; not taken from an external catalogue.",
+  "source_note": "Deterministic suspicious-content patterns narrowed to system-style prompt injection. HIGH = role markers, chat-template tokens, override phrases (R-14); hidden text and zero-width characters are HIGH via R-03 findings, not via this table. LOW = tool / JSON-call syntax. Plain consumer imperatives ('please delete this late payment') must NOT match. False-positive rate on real consumer letters is unknown (U23); measured only on synthetic clean fixtures. Regexes are Python `re` syntax, matched case-insensitively against text that has been NFKC-normalised, had zero-width characters removed and (for file names) '_', '-' and '.' replaced by spaces.",
+  "entries": [
+    {
+      "pattern_id": "ROLE_MARKER",
+      "level": "HIGH",
+      "kind": "regex",
+      "pattern": "(?:^|(?<=[\\s\"'(\\[{<>|*#]))(?:system|assistant|developer)\\s*:",
+      "description": "Chat role marker such as 'SYSTEM:' or 'assistant:' at a line start or after whitespace/punctuation"
+    },
+    {
+      "pattern_id": "CHAT_TEMPLATE_TOKEN",
+      "level": "HIGH",
+      "kind": "regex",
+      "pattern": "<\\|\\s*(?:im_start|im_end|endoftext|system|assistant|user)\\s*\\|>|\\[/?INST\\]|<</?SYS>>",
+      "description": "Model chat-template control tokens (role markers in template form)"
+    },
+    {
+      "pattern_id": "OVERRIDE_IGNORE",
+      "level": "HIGH",
+      "kind": "regex",
+      "pattern": "\\b(?:ignore|disregard|forget|override|bypass)\\s+(?=(?:(?:the|your|my|any|every|of|these|those)\\s+)*(?:all|previous|prior|above|earlier|preceding|original|system)\\b)(?:(?:the|your|my|any|every|of|these|those|all|previous|prior|above|earlier|preceding|original|system)\\s+){1,5}(?:instructions?|prompts?|directions|directives|rules|guidelines|guardrails)\\b",
+      "description": "Instruction-override phrase with a qualifier (all/previous/prior/above/...), e.g. 'ignore previous instructions', 'ignore all instructions', 'disregard the above rules'. 'disregard the rules' alone does not match."
+    },
+    {
+      "pattern_id": "OVERRIDE_NEW_INSTRUCTIONS",
+      "level": "HIGH",
+      "kind": "regex",
+      "pattern": "\\bnew\\s+(?:system\\s+)?instructions?\\s*:|\\bsystem\\s+prompt\\b",
+      "description": "Attempt to install new instructions or reference the system prompt"
+    },
+    {
+      "pattern_id": "TOOL_JSON_CALL",
+      "level": "LOW",
+      "kind": "regex",
+      "pattern": "\\{\\s*\"(?:tool|tool_name|tool_use|function|function_call|name|arguments|action|parameters)\"\\s*:",
+      "description": "Tool / function-call JSON syntax"
+    },
+    {
+      "pattern_id": "TOOL_CALL_TAG",
+      "level": "LOW",
+      "kind": "regex",
+      "pattern": "</?(?:tool_call|tool_use|function_call|function_calls|invoke|tool_result)\\b[^>]*>",
+      "description": "Tool / function-call markup tags"
+    }
+  ]
+}
