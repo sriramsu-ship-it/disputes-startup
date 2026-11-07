@@ -168,3 +168,58 @@ def record_duplicate(conn, *, tenant_id: str, control_number: str, original_case
 def audit_events_for_case(conn, *, tenant_id: str, case_id: str) -> list[dict]:
     return conn.execute("SELECT * FROM audit_events WHERE tenant_id = %s AND case_id = %s ORDER BY event_id",
                         (tenant_id, case_id)).fetchall()
+
+
+# ---------------------------------------------------------------- case IDs (platform-core, migration 0003)
+def _prefix_candidate(tenant_id: str) -> str:
+    """'synthetic-tenant-0' -> 'ST0'; 'ops' -> 'OPS'. Letters: initials; digit groups kept whole."""
+    import re
+    parts = [p for p in re.split(r"[^A-Za-z0-9]+", tenant_id) if p]
+    if len(parts) <= 1:
+        cand = re.sub(r"[^A-Za-z0-9]", "", tenant_id).upper()[:4]
+    else:
+        cand = "".join(p if p.isdigit() else p[0] for p in parts).upper()
+    cand = cand[:10]
+    return cand if len(cand) >= 2 else (cand + "X")[:2] if cand else "TN"
+
+
+def tenant_case_prefix(conn, *, tenant_id: str) -> str:
+    """The tenant's case-ID prefix, allocated on first use and unique across tenants."""
+    row = conn.execute("SELECT prefix FROM tenant_case_prefixes WHERE tenant_id = %s", (tenant_id,)).fetchone()
+    if row:
+        return row["prefix"]
+    base = _prefix_candidate(tenant_id)
+    for n in range(0, 1000):
+        cand = base if n == 0 else f"{base}{n + 1}"
+        row = conn.execute(
+            "INSERT INTO tenant_case_prefixes (tenant_id, prefix) SELECT %s, %s "
+            "WHERE NOT EXISTS (SELECT 1 FROM tenant_case_prefixes WHERE prefix = %s) "
+            "ON CONFLICT (tenant_id) DO NOTHING RETURNING prefix", (tenant_id, cand, cand)).fetchone()
+        if row:
+            return row["prefix"]
+        again = conn.execute("SELECT prefix FROM tenant_case_prefixes WHERE tenant_id = %s",
+                             (tenant_id,)).fetchone()
+        if again:                       # another transaction allocated it for this tenant
+            return again["prefix"]
+    raise RuntimeError(f"could not allocate a case prefix for tenant {tenant_id}")
+
+
+def next_case_id(conn, *, tenant_id: str, day) -> str:
+    """`<PREFIX>-<yyyymmdd>-<seq:05d>`; the per-tenant, per-day counter is incremented atomically."""
+    prefix = tenant_case_prefix(conn, tenant_id=tenant_id)
+    seq = conn.execute(
+        "INSERT INTO case_id_counters (tenant_id, day, last_seq) VALUES (%s, %s, 1) "
+        "ON CONFLICT (tenant_id, day) DO UPDATE SET last_seq = case_id_counters.last_seq + 1 "
+        "RETURNING last_seq", (tenant_id, day)).fetchone()["last_seq"]
+    return f"{prefix}-{day.strftime('%Y%m%d')}-{seq:05d}"
+
+
+def find_case_for_job(conn, *, tenant_id: str, case_id: str | None, control_number: str | None) -> dict | None:
+    """Locate the case a job worked on (by case_id, else by control number), tenant-scoped."""
+    if case_id:
+        return conn.execute("SELECT * FROM cases WHERE tenant_id = %s AND case_id = %s",
+                            (tenant_id, case_id)).fetchone()
+    if control_number:
+        return conn.execute("SELECT * FROM cases WHERE tenant_id = %s AND control_number = %s",
+                            (tenant_id, control_number)).fetchone()
+    return None
