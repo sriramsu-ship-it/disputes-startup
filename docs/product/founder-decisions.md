@@ -3,6 +3,9 @@
 **For:** Sriram (sole founder)  **From:** product-manager  **Updated:** 2026-10-19 (after Sriram's decisions in chat)  **Read with:** `docs/product/prd-mvp-v0.md` v1.1
 **Bottom line:** Phase 1 is a synthetic-data technical prototype with no interviews. **Stage 0 is approved and handed to the developer.** Nothing past Stage 0 starts without your written approval.
 
+## Update 2026-11-07 (managed-service pivot)
+Decided by you: the managed-service model; Stages 1-3 approved; multi-tenant platform; agents merge once the suite passes. PRD is now **v1.2**. Your open decisions D1-D10 (ICP restatement, pulling service-buyer discovery forward, pivot kill criteria, pricing structure to test, DELETE pre-approval, analyst model and trial, counsel scope, SOC 2 and insurance, Stage 4 scope) are in `managed-service-model.md` §12 and PRD §13 Q14-Q19. The rest of this page is the 2026-10-19 status and still applies unless a v1.2 item supersedes it.
+
 ## Decided (2026-10-19, by Sriram)
 | # | Decision | Note |
 |---|---|---|
