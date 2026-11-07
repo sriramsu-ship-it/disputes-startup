@@ -182,3 +182,12 @@ Format:
   - Sriram: the five items above.
 - Open questions: none blocking.
 - Status: OPEN
+
+## 2026-11-07 | Sriram (founder, in chat) -> developer, product-manager | Managed-service pivot; Stages 1-3 approved; parallel build
+- Produced: decisions in `docs/DECISIONS.md` (2026-11-07 rows); `docs/engineering/platform-architecture.md`; `docs/engineering/adr/ADR-011-platform-modules-and-parallel-build.md`; ADR-008 revision; platform foundation in `src/disputes/` (domain contract, schema, audit chain append, repository, state machine, module stubs, test DB fixtures).
+- **Approval:** Sriram approves **Stages 1, 2 and 3** (written, in chat, 2026-11-07). Build agents may push and merge once the suite passes.
+- Need back:
+  - developer (parallel module agents): build Stages 1-3 per `platform-architecture.md`, one PR per module; notes in `docs/engineering/stage-notes/`.
+  - product-manager: PRD v1.2 for the managed-service model (buyer, pricing unit, analyst role, client portal, SLA, service-provider obligations); see the PM entry below.
+- Open questions: Stage 0 trial labelling and ADR-006 ZDR confirmation are still Sriram's to do; neither blocks the synthetic build.
+- Status: OPEN

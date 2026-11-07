@@ -1,4 +1,14 @@
-# src/ — Stage 0: synthetic data generator and fixtures
+# src/ — disputes platform (Stages 1-3, in progress) and the Stage 0 synthetic generator
+
+**Platform:** `disputes/` — see `docs/engineering/platform-architecture.md` for modules and owners.
+```bash
+scripts/dev_postgres.sh start                     # local Postgres on 127.0.0.1:5432 (from repo root)
+.venv/bin/pip install -r src/requirements-dev.txt
+cd src && ../.venv/bin/python -m pytest
+```
+
+---
+# Stage 0: synthetic data generator and fixtures
 
 **Everything here is SYNTHETIC.** No real person, company, account or bureau data. The ACDV fixture
 shape (`fixture_schema_version = placeholder-acdv-0.1.0`) and every code and rating table are

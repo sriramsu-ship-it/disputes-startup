@@ -3,7 +3,9 @@
 Read this first. It applies to every agent working in this repo.
 
 ## The company
-An AI-native platform that helps data furnishers (banks, card issuers, lenders) handle credit reporting disputes under the FCRA. It covers the furnisher side end to end: ACDV requests arriving through e-OSCAR, direct disputes under Regulation V, investigation, response, Metro 2 correction, and an audit trail a regulator would accept.
+**Model (decided 2026-11-07): a managed dispute operations service.** We run furnisher clients' FCRA disputes for them, staffed by trained non-credentialed analysts working in our AI-native platform, priced per dispute ("the $15-an-hour expert" model). Selling the software itself is a later expansion. The platform is multi-tenant (one tenant per client) with an analyst workbench (`/ops`) and a client portal (`/client`). Architecture: `docs/engineering/platform-architecture.md`.
+
+The platform helps data furnishers (banks, card issuers, lenders) handle credit reporting disputes under the FCRA. It covers the furnisher side end to end: ACDV requests arriving through e-OSCAR, direct disputes under Regulation V, investigation, response, Metro 2 correction, and an audit trail a regulator would accept.
 
 Parked for later: a broader context-check and audit layer for banking AI agents (dispute resolution and loan decisions are the entry points). Not in scope now; keep the architecture from precluding it.
 
@@ -19,6 +21,8 @@ Stage: pre-product. Goal right now: find out whether this is a real, fundable we
 | `developer` | Architecture, ADRs, feasibility, implementation, tests, LLM evals, security | `docs/engineering/` and `src/` |
 
 Run the whole team on a goal with `/run-team <goal>`.
+
+For platform builds, several `developer` agents work **in parallel, one per module** (platform-core, intake, rules, agents, web, generator), each on branch `agent/<module>` with one PR. Module ownership and rules: `docs/engineering/platform-architecture.md` and ADR-011. Agents may push and merge to `main` once the full suite passes (Sriram, 2026-11-07).
 
 ## How we work together
 1. **Shared files are the memory.** Agents don't remember each other's conversations. Anything another agent needs goes in a file under `docs/`.
@@ -59,7 +63,7 @@ src/                       code
 ```
 
 ## Current priorities (update as they change)
-1. **Phase 1 (now, no interviews, desk research only):** prove the core loop (intake, classify, investigate, cited draft, human review, audit record) on synthetic data with a measured eval baseline, per PRD v1.1 (`docs/product/prd-mvp-v0.md`). The developer agent builds in stages; **only Stage 0 (ADR-001 to 010 and the synthetic generator with fixtures) is approved**; each later stage needs Sriram's written approval.
+1. **Phase 1 (now, no interviews, desk research only):** prove the core loop (intake, classify, investigate, cited draft, human review, audit record) on synthetic data with a measured eval baseline, per PRD v1.1 (`docs/product/prd-mvp-v0.md`). **Stages 0-3 are approved (Stages 1-3 on 2026-11-07)**; Stage 4 (eval harness and gates) needs Sriram's written approval. The managed-service pivot means the PRD moves to v1.2 (PM).
 2. Meet the Phase 1 exit gate (PRD §12). It is a technical go/no-go only and is not evidence for pricing, a pilot or hiring.
 3. **Phase 2 (deferred):** validate the wedge, budget owner and willingness to pay (U1, U4, U5, U17), e-OSCAR sponsorship (U2) and LLM-hosting tolerance (U7) via `docs/product/discovery-plan.md`; practitioner checks (U20, U29, U31).
 4. Before any real data, pilot or compliance claim: FCRA counsel engaged, and the regulatory defensibility of AI-assisted investigations reviewed (U3, U10).
