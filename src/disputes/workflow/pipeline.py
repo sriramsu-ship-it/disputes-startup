@@ -414,11 +414,15 @@ def _run_steps(run: _Run) -> None:
         claims, c_esc = extracted
         claims = list(claims)
         run.add_reasons(c_esc, "extract_claims")
+        guard = not claims and _has_consumer_narrative(d)
+        if guard:   # defence in depth: a letter we extracted nothing from must never be verified (R-10 B1)
+            run.add_reasons([E.CLAIM_UNRESOLVED], "no_claims_guard")
         with run.conn.transaction():
             run.flush_model_calls("extract_claims")
             a = run.artifact(ArtifactKind.CLAIMS, claims)
             run.event("CLAIMS_EXTRACTED", {"rule_id": "R-11", "claims": len(claims),
-                                           "escalations": tuple(c_esc or ()), "artifact": a})
+                                           "escalations": tuple(c_esc or ()), "no_claims_guard": guard,
+                                           "artifact": a})
     evidence = _investigate(run, claims)
 
     # ---- 4 mapping + decision
@@ -484,6 +488,16 @@ def _investigate(run: _Run, claims: list) -> list:
         if E.MONTHS_UNDETERMINED in run.reasons:
             run.fields(escalation_reasons=[r.value for r in run.reasons])
     return evidence
+
+
+NARRATIVE_MIN_WORDS = 25
+
+
+def _has_consumer_narrative(d) -> bool:
+    """True when the consumer sent a letter with enough text to contain claims. A letter we could
+    not extract a single claim from is a model miss, not evidence that nothing was claimed."""
+    words = sum(len((a.extracted_text or "").split()) for a in (d.attachments or ()))
+    return words >= NARRATIVE_MIN_WORDS
 
 
 def _recheck_suspicion(run: _Run) -> None:
