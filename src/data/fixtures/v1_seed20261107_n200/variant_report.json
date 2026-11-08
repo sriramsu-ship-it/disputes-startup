@@ -1,0 +1,300 @@
+{
+  "claims_by_kind": {
+    "BALANCE_SHOULD_BE": {
+      "claim_type": "AMOUNT",
+      "claims": 16,
+      "distinct_quotes": 16,
+      "distinct_skeletons": 7,
+      "distinct_templates_used": 7,
+      "templates_available": 12
+    },
+    "BALANCE_TOO_HIGH": {
+      "claim_type": "AMOUNT",
+      "claims": 6,
+      "distinct_quotes": 6,
+      "distinct_skeletons": 6,
+      "distinct_templates_used": 6,
+      "templates_available": 10
+    },
+    "ENCLOSED_STATEMENT": {
+      "claim_type": "PAYMENT_EVENT",
+      "claims": 4,
+      "distinct_quotes": 4,
+      "distinct_skeletons": 4,
+      "distinct_templates_used": 3,
+      "templates_available": 10
+    },
+    "EXTRA_NOT_30": {
+      "claim_type": "PAYMENT_EVENT",
+      "claims": 6,
+      "distinct_quotes": 6,
+      "distinct_skeletons": 6,
+      "distinct_templates_used": 4,
+      "templates_available": 10
+    },
+    "FRAUD_DENIAL": {
+      "claim_type": "ACCOUNT_STATUS",
+      "claims": 10,
+      "distinct_quotes": 7,
+      "distinct_skeletons": 7,
+      "distinct_templates_used": 7,
+      "templates_available": 26
+    },
+    "LATES_WRONG": {
+      "claim_type": "ACCOUNT_STATUS",
+      "claims": 2,
+      "distinct_quotes": 2,
+      "distinct_skeletons": 2,
+      "distinct_templates_used": 2,
+      "templates_available": 12
+    },
+    "NEVER_LATE": {
+      "claim_type": "ACCOUNT_STATUS",
+      "claims": 56,
+      "distinct_quotes": 13,
+      "distinct_skeletons": 13,
+      "distinct_templates_used": 12,
+      "templates_available": 12
+    },
+    "NOT_30_LATE": {
+      "claim_type": "PAYMENT_EVENT",
+      "claims": 13,
+      "distinct_quotes": 13,
+      "distinct_skeletons": 12,
+      "distinct_templates_used": 8,
+      "templates_available": 14
+    },
+    "ONE_BEHIND": {
+      "claim_type": "PAYMENT_EVENT",
+      "claims": 9,
+      "distinct_quotes": 9,
+      "distinct_skeletons": 9,
+      "distinct_templates_used": 6,
+      "templates_available": 12
+    },
+    "ON_PLAN": {
+      "claim_type": "AGREEMENT",
+      "claims": 7,
+      "distinct_quotes": 7,
+      "distinct_skeletons": 7,
+      "distinct_templates_used": 4,
+      "templates_available": 12
+    },
+    "ON_TIME": {
+      "claim_type": "PAYMENT_EVENT",
+      "claims": 115,
+      "distinct_quotes": 98,
+      "distinct_skeletons": 48,
+      "distinct_templates_used": 16,
+      "templates_available": 16
+    },
+    "ON_TIME_TWO": {
+      "claim_type": "PAYMENT_EVENT",
+      "claims": 6,
+      "distinct_quotes": 6,
+      "distinct_skeletons": 6,
+      "distinct_templates_used": 4,
+      "templates_available": 12
+    },
+    "REP_PROMISE": {
+      "claim_type": "AGREEMENT",
+      "claims": 10,
+      "distinct_quotes": 10,
+      "distinct_skeletons": 10,
+      "distinct_templates_used": 7,
+      "templates_available": 12
+    }
+  },
+  "claims_by_type": {
+    "ACCOUNT_STATUS": {
+      "claims": 68,
+      "distinct_quotes": 22,
+      "distinct_skeletons": 22,
+      "distinct_templates_used": 21
+    },
+    "AGREEMENT": {
+      "claims": 17,
+      "distinct_quotes": 17,
+      "distinct_skeletons": 17,
+      "distinct_templates_used": 11
+    },
+    "AMOUNT": {
+      "claims": 22,
+      "distinct_quotes": 22,
+      "distinct_skeletons": 13,
+      "distinct_templates_used": 13
+    },
+    "PAYMENT_EVENT": {
+      "claims": 153,
+      "distinct_quotes": 136,
+      "distinct_skeletons": 85,
+      "distinct_templates_used": 41
+    }
+  },
+  "fraud": {
+    "cases": 10,
+    "combinations_possible": 8190,
+    "components_available": {
+      "actions": 15,
+      "denials": 26,
+      "explanations": 21
+    },
+    "distinct_combinations_used": 10,
+    "distinct_passage_skeletons": 10,
+    "distinct_passages": 10,
+    "indirect_phrasing_cases": 3,
+    "max_pairwise_word3gram_jaccard": 0.3158,
+    "max_shared_components_between_two_cases": 1,
+    "near_duplicate_pairs": 0,
+    "near_duplicate_threshold": 0.6
+  },
+  "injection_surfaces": {
+    "injection_acdv_free_text": {
+      "cases": 2,
+      "catalog_variants": 25,
+      "distinct_variants_used": 2,
+      "placements_or_styles_used": [
+        "-"
+      ],
+      "variant_classes_used": 2
+    },
+    "injection_file_metadata": {
+      "cases": 2,
+      "catalog_variants": 25,
+      "distinct_variants_used": 2,
+      "placements_or_styles_used": [
+        "-"
+      ],
+      "variant_classes_used": 2
+    },
+    "injection_hidden_text": {
+      "cases": 2,
+      "catalog_variants": 25,
+      "distinct_variants_used": 2,
+      "placements_or_styles_used": [
+        "after_greeting",
+        "between_paragraphs"
+      ],
+      "variant_classes_used": 2
+    },
+    "injection_letter_body": {
+      "cases": 2,
+      "catalog_variants": 26,
+      "distinct_variants_used": 2,
+      "placements_or_styles_used": [
+        "after_signature",
+        "start_of_letter"
+      ],
+      "variant_classes_used": 2
+    },
+    "injection_tool_syntax": {
+      "cases": 2,
+      "catalog_variants": 25,
+      "distinct_variants_used": 2,
+      "placements_or_styles_used": [
+        "after_signature",
+        "own_paragraph_mid"
+      ],
+      "variant_classes_used": 2
+    }
+  },
+  "letters": {
+    "chars_max": 847,
+    "chars_median": 434,
+    "chars_min": 288,
+    "day_styles_used": [
+      "abbr",
+      "day_first",
+      "iso",
+      "long",
+      "ordinal",
+      "us_short",
+      "us_slash"
+    ],
+    "distinct_closings_used": 12,
+    "distinct_greetings_used": 14,
+    "distinct_letter_texts": 192,
+    "distinct_templates_used_by_bank": {
+      "BACKSTORY": 11,
+      "BALANCE_SHOULD_BE": 7,
+      "BALANCE_TOO_HIGH": 6,
+      "CLOSING": 12,
+      "ENCLOSED_STATEMENT": 3,
+      "EXTRA_NOT_30": 4,
+      "FILLER": 16,
+      "FRAUD_ACTION": 8,
+      "FRAUD_DENIAL": 7,
+      "FRAUD_EXPL": 8,
+      "GREETING": 14,
+      "IMPERATIVE": 5,
+      "INTRO_CONTEXT": 12,
+      "INTRO_ID": 14,
+      "LATES_WRONG": 2,
+      "LOOKALIKE": 4,
+      "NEVER_LATE": 12,
+      "NOT_30_LATE": 8,
+      "ONE_BEHIND": 6,
+      "ON_PLAN": 4,
+      "ON_TIME": 16,
+      "ON_TIME_TWO": 4,
+      "OTHER": 7,
+      "PII_CARD": 4,
+      "PII_SSN": 1,
+      "PII_THIRD": 2,
+      "REP_PROMISE": 7,
+      "REQUEST": 14
+    },
+    "letters": 196,
+    "letters_with_typos": 47,
+    "month_styles_used": [
+      "abbr",
+      "abbr_dot",
+      "iso",
+      "long",
+      "long_comma",
+      "long_of",
+      "m_yyyy",
+      "mm_yyyy"
+    ],
+    "structures_used": {
+      "long": 4,
+      "single_paragraph": 18,
+      "standard": 174
+    },
+    "template_draws_by_bank": {
+      "BACKSTORY": 20,
+      "BALANCE_SHOULD_BE": 16,
+      "BALANCE_TOO_HIGH": 6,
+      "CLOSING": 196,
+      "ENCLOSED_STATEMENT": 4,
+      "EXTRA_NOT_30": 6,
+      "FILLER": 325,
+      "FRAUD_ACTION": 10,
+      "FRAUD_DENIAL": 10,
+      "FRAUD_EXPL": 10,
+      "GREETING": 196,
+      "IMPERATIVE": 6,
+      "INTRO_CONTEXT": 158,
+      "INTRO_ID": 196,
+      "LATES_WRONG": 2,
+      "LOOKALIKE": 5,
+      "NEVER_LATE": 56,
+      "NOT_30_LATE": 13,
+      "ONE_BEHIND": 9,
+      "ON_PLAN": 7,
+      "ON_TIME": 114,
+      "ON_TIME_TWO": 6,
+      "OTHER": 12,
+      "PII_CARD": 4,
+      "PII_SSN": 3,
+      "PII_THIRD": 3,
+      "REP_PROMISE": 10,
+      "REQUEST": 196
+    },
+    "typos_total": 65,
+    "with_header_block": 86
+  },
+  "n_cases": 200,
+  "n_non_duplicate_cases": 196,
+  "synthetic": true
+}

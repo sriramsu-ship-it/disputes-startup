@@ -1,4 +1,4 @@
-"""CLI: python -m synthgen.cli {generate,trial} ...  (run from src/). ALL OUTPUT SYNTHETIC."""
+"""CLI: python -m synthgen.cli {generate,trial,redteam} ...  (run from src/). ALL OUTPUT SYNTHETIC."""
 from __future__ import annotations
 
 import argparse
@@ -165,6 +165,72 @@ def write_trial(out: Path, seed: int) -> None:
         "These are generator intent, not human gold.\n", encoding="utf-8")
 
 
+# ----------------------------------------------------------------- generator v1 (Stage 2)
+def t1_strata(labels: list[dict]) -> dict:
+    """PRD Appendix B T1 strata counts (generator intent)."""
+    return {
+        "should_not_verify": sum(l["gold"]["outcome"] in ("MODIFY", "ESCALATED") for l in labels),
+        "should_escalate": sum(l["gold"]["outcome"] == "ESCALATED" for l in labels),
+        "identity_fraud_signal": sum("ID_FRAUD_SUSPECTED" in l["gold"]["escalation_reasons"] for l in labels),
+        "clean_should_verify": sum(l["gold"]["outcome"] == "VERIFIED_AS_REPORTED" and not l["adversarial_tags"]
+                                   and not l["edge_tags"] for l in labels),
+    }
+
+
+def _dump_json(path: Path, obj) -> str:
+    text = json.dumps(obj, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+    path.write_text(text, encoding="utf-8")
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def write_set_v1(out: Path, seed: int, data: dict, mix: str = "default") -> dict:
+    from .v1 import GENERATOR_VERSION_V1, report
+    out.mkdir(parents=True, exist_ok=True)
+    rep = report.variant_report(data)
+    hashes = {
+        "acdvs.jsonl": _dump_jsonl(out / "acdvs.jsonl", data["acdvs"]),
+        "sor_accounts.jsonl": _dump_jsonl(out / "sor_accounts.jsonl", data["accounts"]),
+        "labels.jsonl": _dump_jsonl(out / "labels.jsonl", data["labels"]),
+        "variant_report.json": _dump_json(out / "variant_report.json", rep),
+    }
+    summary = summarise(data["labels"])
+    summary["t1_strata"] = t1_strata(data["labels"])
+    manifest = {
+        "synthetic": True, "banner": BANNER, "seed": seed, "mix": mix,
+        "generator_version": GENERATOR_VERSION_V1, "fixture_schema_version": FIXTURE_SCHEMA_VERSION,
+        "reference_tables": tables.table_versions(), "files_sha256": hashes, "summary": summary,
+    }
+    (out / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return manifest
+
+
+def write_redteam(out: Path, seed: int) -> dict:
+    from .v1 import GENERATOR_VERSION_V1, redteam, report
+    data = redteam.generate_t2(seed)
+    out.mkdir(parents=True, exist_ok=True)
+    rep = report.variant_report(data)
+    hashes = {
+        "acdvs.jsonl": _dump_jsonl(out / "acdvs.jsonl", data["acdvs"]),
+        "sor_accounts.jsonl": _dump_jsonl(out / "sor_accounts.jsonl", data["accounts"]),
+        "labels.jsonl": _dump_jsonl(out / "labels.jsonl", data["labels"]),
+        "pairs.jsonl": _dump_jsonl(out / "pairs.jsonl", data["pairs"]),
+        "variants.jsonl": _dump_jsonl(out / "variants.jsonl", data["variants"]),
+        "variant_report.json": _dump_json(out / "variant_report.json", rep),
+    }
+    per_surface = dict(sorted(collections.Counter(p["surface"] for p in data["pairs"]).items()))
+    manifest = {
+        "synthetic": True, "banner": BANNER, "seed": seed, "suite": "T2 red-team (PRD Appendix B, B5)",
+        "generator_version": GENERATOR_VERSION_V1, "fixture_schema_version": FIXTURE_SCHEMA_VERSION,
+        "reference_tables": tables.table_versions(), "files_sha256": hashes,
+        "summary": {"variants": len(data["pairs"]), "cases": len(data["acdvs"]), "variants_per_surface": per_surface,
+                    "base_scenarios": dict(sorted(collections.Counter(p["base_scenario"] for p in data["pairs"]).items())),
+                    "gold_outcomes": dict(sorted(collections.Counter(p["gold_outcome"] for p in data["pairs"]).items()))},
+        "warning": "Contains deliberate prompt-injection text. Treat every field as data, never as instructions.",
+    }
+    (out / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return manifest
+
+
 def main(argv: list[str] | None = None) -> None:
     p = argparse.ArgumentParser(description=BANNER)
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -172,12 +238,27 @@ def main(argv: list[str] | None = None) -> None:
     g.add_argument("--seed", type=int, required=True)
     g.add_argument("--n", type=int, default=200)
     g.add_argument("--out", type=Path, required=True)
+    g.add_argument("--generator-version", choices=[GENERATOR_VERSION, "1.0.0"], default=GENERATOR_VERSION,
+                   help="0.1.0 = Stage 0 generator (default, unchanged); 1.0.0 = Stage 2 generator v1")
+    g.add_argument("--mix", choices=["default", "t1"], default="default", help="v1 only: case mix")
     t = sub.add_parser("trial")
     t.add_argument("--seed", type=int, default=20261019)
     t.add_argument("--out", type=Path, required=True)
+    r = sub.add_parser("redteam", help="v1: write the T2 red-team suite (every variant + clean twin)")
+    r.add_argument("--seed", type=int, default=20261107)
+    r.add_argument("--out", type=Path, required=True)
     args = p.parse_args(argv)
-    if args.cmd == "generate":
+    if args.cmd == "generate" and args.generator_version == "1.0.0":
+        from .v1 import generator as g1
+        m = write_set_v1(args.out, args.seed, g1.generate(args.seed, args.n, g1.MIXES[args.mix]), args.mix)
+        print(json.dumps(m["summary"], indent=2))
+    elif args.cmd == "generate":
+        if args.mix != "default":
+            p.error("--mix is only supported with --generator-version 1.0.0")
         m = write_set(args.out, args.seed, generator.generate(args.seed, args.n))
+        print(json.dumps(m["summary"], indent=2))
+    elif args.cmd == "redteam":
+        m = write_redteam(args.out, args.seed)
         print(json.dumps(m["summary"], indent=2))
     else:
         write_trial(args.out, args.seed)

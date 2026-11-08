@@ -1,0 +1,96 @@
+{
+  "banner": "SYNTHETIC TEST DATA - NOT REAL PEOPLE, ACCOUNTS OR BUREAU RECORDS. Placeholder schema and codes (U6).",
+  "files_sha256": {
+    "acdvs.jsonl": "4dcd94e834c5f07bab7403135563f293a02d7c59d85021513b1497083b1da827",
+    "labels.jsonl": "baf9d8bc61806583e47aeace6d757d146b7a7923c5eb4478cd1349d3582388f6",
+    "sor_accounts.jsonl": "2905057521c262d7f983983671f8795115daba642fea0393d6bd58fde204f896",
+    "variant_report.json": "fb82b9477dce9e5b09dd23f2ce31f9660bc32f7a9f123ebb5cef4832e5417760"
+  },
+  "fixture_schema_version": "placeholder-acdv-0.1.0",
+  "generator_version": "1.0.0",
+  "mix": "default",
+  "reference_tables": {
+    "dispute_code_map": {
+      "verified": false,
+      "version": "0.1.0"
+    },
+    "holiday_calendar": {
+      "verified": false,
+      "version": "0.1.0"
+    },
+    "payment_rating_map": {
+      "verified": false,
+      "version": "0.1.0"
+    },
+    "time_zone": {
+      "verified": false,
+      "version": "0.1.0"
+    }
+  },
+  "seed": 20261107,
+  "summary": {
+    "adversarial_count": 24,
+    "adversarial_share": 0.12,
+    "adversarial_tags": {
+      "identity_fraud_disguised": 10,
+      "injection_acdv_free_text": 2,
+      "injection_file_metadata": 2,
+      "injection_hidden_text": 2,
+      "injection_letter_body": 2,
+      "injection_tool_syntax": 2,
+      "pii_bait": 4
+    },
+    "categories": {
+      "BALANCE": 16,
+      "BALANCE+PAYMENT_HISTORY": 6,
+      "IDENTITY_FRAUD": 10,
+      "OTHER": 7,
+      "PAYMENT_HISTORY": 161
+    },
+    "claims_total": 265,
+    "edge_case_count": 62,
+    "edge_case_share": 0.31,
+    "edge_tags": {
+      "conflicting_records": 14,
+      "deadline_breached": 4,
+      "deadline_on_holiday": 2,
+      "deferral_or_hardship": 14,
+      "doc_unreadable": 4,
+      "duplicate": 4,
+      "malformed_input": 6,
+      "missing_document": 4,
+      "missing_records": 6,
+      "months_undetermined": 4,
+      "multi_issue": 6,
+      "near_deadline": 4,
+      "repeat": 4
+    },
+    "escalation_reasons": {
+      "BREACHED": 4,
+      "CLAIM_UNRESOLVED": 14,
+      "CLASS_CONFLICT": 4,
+      "DOC_UNREADABLE": 4,
+      "EVIDENCE_CONFLICT": 14,
+      "EVIDENCE_MISSING": 6,
+      "ID_FRAUD_SUSPECTED": 10,
+      "INTAKE_INVALID": 6,
+      "MONTHS_UNDETERMINED": 4,
+      "MULTI_ISSUE": 6
+    },
+    "n_cases": 200,
+    "outcomes": {
+      "DUPLICATE_IGNORED": 4,
+      "ESCALATED": 72,
+      "MODIFY": 32,
+      "OUT_OF_SCOPE": 18,
+      "VERIFIED_AS_REPORTED": 74
+    },
+    "t1_strata": {
+      "clean_should_verify": 54,
+      "identity_fraud_signal": 10,
+      "should_escalate": 72,
+      "should_not_verify": 104
+    }
+  },
+  "synthetic": true
+}
