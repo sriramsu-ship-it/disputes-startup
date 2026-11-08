@@ -1,0 +1,241 @@
+{
+  "claims_by_kind": {
+    "BALANCE_SHOULD_BE": {
+      "claim_type": "AMOUNT",
+      "claims": 42,
+      "distinct_quotes": 21,
+      "distinct_skeletons": 12,
+      "distinct_templates_used": 11,
+      "templates_available": 12
+    },
+    "FRAUD_DENIAL": {
+      "claim_type": "ACCOUNT_STATUS",
+      "claims": 40,
+      "distinct_quotes": 11,
+      "distinct_skeletons": 11,
+      "distinct_templates_used": 11,
+      "templates_available": 26
+    },
+    "NEVER_LATE": {
+      "claim_type": "ACCOUNT_STATUS",
+      "claims": 20,
+      "distinct_quotes": 6,
+      "distinct_skeletons": 6,
+      "distinct_templates_used": 6,
+      "templates_available": 12
+    },
+    "NOT_30_LATE": {
+      "claim_type": "PAYMENT_EVENT",
+      "claims": 12,
+      "distinct_quotes": 6,
+      "distinct_skeletons": 6,
+      "distinct_templates_used": 5,
+      "templates_available": 14
+    },
+    "ONE_BEHIND": {
+      "claim_type": "PAYMENT_EVENT",
+      "claims": 30,
+      "distinct_quotes": 15,
+      "distinct_skeletons": 14,
+      "distinct_templates_used": 7,
+      "templates_available": 12
+    },
+    "ON_PLAN": {
+      "claim_type": "AGREEMENT",
+      "claims": 20,
+      "distinct_quotes": 10,
+      "distinct_skeletons": 9,
+      "distinct_templates_used": 6,
+      "templates_available": 12
+    },
+    "ON_TIME": {
+      "claim_type": "PAYMENT_EVENT",
+      "claims": 66,
+      "distinct_quotes": 31,
+      "distinct_skeletons": 23,
+      "distinct_templates_used": 13,
+      "templates_available": 16
+    },
+    "REP_PROMISE": {
+      "claim_type": "AGREEMENT",
+      "claims": 42,
+      "distinct_quotes": 21,
+      "distinct_skeletons": 21,
+      "distinct_templates_used": 9,
+      "templates_available": 12
+    }
+  },
+  "claims_by_type": {
+    "ACCOUNT_STATUS": {
+      "claims": 60,
+      "distinct_quotes": 17,
+      "distinct_skeletons": 17,
+      "distinct_templates_used": 17
+    },
+    "AGREEMENT": {
+      "claims": 62,
+      "distinct_quotes": 31,
+      "distinct_skeletons": 30,
+      "distinct_templates_used": 15
+    },
+    "AMOUNT": {
+      "claims": 42,
+      "distinct_quotes": 21,
+      "distinct_skeletons": 12,
+      "distinct_templates_used": 11
+    },
+    "PAYMENT_EVENT": {
+      "claims": 108,
+      "distinct_quotes": 52,
+      "distinct_skeletons": 43,
+      "distinct_templates_used": 25
+    }
+  },
+  "fraud": {
+    "cases": 40,
+    "combinations_possible": 8190,
+    "components_available": {
+      "actions": 15,
+      "denials": 26,
+      "explanations": 21
+    },
+    "distinct_combinations_used": 20,
+    "distinct_passage_skeletons": 20,
+    "distinct_passages": 20,
+    "indirect_phrasing_cases": 12,
+    "max_pairwise_word3gram_jaccard": 1.0,
+    "max_shared_components_between_two_cases": 3,
+    "near_duplicate_pairs": 20,
+    "near_duplicate_threshold": 0.6
+  },
+  "injection_surfaces": {
+    "injection_acdv_free_text": {
+      "cases": 25,
+      "catalog_variants": 25,
+      "distinct_variants_used": 25,
+      "placements_or_styles_used": [
+        "-"
+      ],
+      "variant_classes_used": 11
+    },
+    "injection_file_metadata": {
+      "cases": 25,
+      "catalog_variants": 25,
+      "distinct_variants_used": 25,
+      "placements_or_styles_used": [
+        "-"
+      ],
+      "variant_classes_used": 19
+    },
+    "injection_hidden_text": {
+      "cases": 25,
+      "catalog_variants": 25,
+      "distinct_variants_used": 25,
+      "placements_or_styles_used": [
+        "after_greeting",
+        "between_paragraphs",
+        "end_of_document"
+      ],
+      "variant_classes_used": 3
+    },
+    "injection_letter_body": {
+      "cases": 26,
+      "catalog_variants": 26,
+      "distinct_variants_used": 26,
+      "placements_or_styles_used": [
+        "after_signature",
+        "before_request",
+        "inline_after_claim",
+        "own_paragraph_mid",
+        "start_of_letter"
+      ],
+      "variant_classes_used": 14
+    },
+    "injection_tool_syntax": {
+      "cases": 25,
+      "catalog_variants": 25,
+      "distinct_variants_used": 25,
+      "placements_or_styles_used": [
+        "after_signature",
+        "before_request",
+        "inline_after_claim",
+        "own_paragraph_mid"
+      ],
+      "variant_classes_used": 25
+    }
+  },
+  "letters": {
+    "chars_max": 752,
+    "chars_median": 450,
+    "chars_min": 294,
+    "day_styles_used": [
+      "abbr",
+      "day_first",
+      "iso",
+      "long",
+      "ordinal",
+      "us_short",
+      "us_slash"
+    ],
+    "distinct_closings_used": 12,
+    "distinct_greetings_used": 14,
+    "distinct_letter_texts": 202,
+    "distinct_templates_used_by_bank": {
+      "BALANCE_SHOULD_BE": 11,
+      "CLOSING": 12,
+      "FILLER": 16,
+      "FRAUD_ACTION": 11,
+      "FRAUD_DENIAL": 11,
+      "FRAUD_EXPL": 14,
+      "GREETING": 14,
+      "INTRO_CONTEXT": 12,
+      "INTRO_ID": 14,
+      "NEVER_LATE": 6,
+      "NOT_30_LATE": 5,
+      "ONE_BEHIND": 7,
+      "ON_PLAN": 6,
+      "ON_TIME": 13,
+      "REP_PROMISE": 9,
+      "REQUEST": 14
+    },
+    "letters": 252,
+    "letters_with_typos": 42,
+    "month_styles_used": [
+      "abbr",
+      "abbr_dot",
+      "iso",
+      "long",
+      "long_comma",
+      "long_of",
+      "m_yyyy",
+      "mm_yyyy"
+    ],
+    "structures_used": {
+      "single_paragraph": 26,
+      "standard": 226
+    },
+    "template_draws_by_bank": {
+      "BALANCE_SHOULD_BE": 42,
+      "CLOSING": 252,
+      "FILLER": 386,
+      "FRAUD_ACTION": 40,
+      "FRAUD_DENIAL": 40,
+      "FRAUD_EXPL": 40,
+      "GREETING": 252,
+      "INTRO_CONTEXT": 222,
+      "INTRO_ID": 252,
+      "NEVER_LATE": 20,
+      "NOT_30_LATE": 12,
+      "ONE_BEHIND": 30,
+      "ON_PLAN": 20,
+      "ON_TIME": 66,
+      "REP_PROMISE": 42,
+      "REQUEST": 252
+    },
+    "typos_total": 54,
+    "with_header_block": 122
+  },
+  "n_cases": 252,
+  "n_non_duplicate_cases": 252,
+  "synthetic": true
+}
