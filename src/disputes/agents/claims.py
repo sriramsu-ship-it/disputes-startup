@@ -128,4 +128,25 @@ def map_claims(claims: list[Claim], evidence: list[Evidence], budget) -> tuple[l
             result.append(replace(c, finding=ClaimFinding(m["finding"]),
                                   evidence_ids=tuple(dict.fromkeys(m.get("evidence_ids") or [])),
                                   reason=(m.get("reason") or "")[:500]))
+    result = [_agreement_backstop(c) for c in result]
     return result, ((EscalationReason.UNADDRESSED_CLAIM,) if unaddressed else ())
+
+
+def _agreement_markers() -> tuple[str, ...]:
+    from disputes.reference import load
+    return tuple(e["phrase"].lower() for e in load("agreement_markers")["entries"])
+
+
+def _agreement_backstop(c: Claim) -> Claim:
+    """Code check after the model (defence in depth for R-10 B1): a claim that reports a promise or
+    agreement ("your agent confirmed X would be reported as current") is about what the furnisher
+    said, which payment records cannot disprove. Whatever type the model gave it, such a claim is
+    never CONTRADICTED by system-of-record evidence alone -> NOT_ADDRESSABLE (a human checks call notes)."""
+    if c.finding != ClaimFinding.CONTRADICTED:
+        return c
+    q = " ".join((c.quote or "").lower().split())
+    if c.claim_type == "AGREEMENT" or any(m in q for m in _agreement_markers()):
+        return replace(c, finding=ClaimFinding.NOT_ADDRESSABLE,
+                       reason="AGREEMENT_BACKSTOP: the claim reports a promise or agreement; payment records "
+                              "cannot contradict it. Check call notes / agreements. Model said: " + (c.reason or "")[:300])
+    return c

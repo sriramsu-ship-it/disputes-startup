@@ -1,0 +1,60 @@
+{
+  "table_id": "agreement_markers",
+  "table_version": "0.1.0",
+  "verified": false,
+  "source": "NONE - written by the integrator on 2026-11-07 after an error analysis of one false verify in v1_seed20261107_n200 (agreement claim mistyped by the offline model); general phrasing for reported promises, not validated against real letters",
+  "source_note": "Substring match on the lower-cased, whitespace-collapsed claim quote. A match can only turn CONTRADICTED into NOT_ADDRESSABLE (more escalation, never less). Must be reviewed before any non-synthetic run (R-35).",
+  "entries": [
+    {
+      "phrase": "told me"
+    },
+    {
+      "phrase": "was told"
+    },
+    {
+      "phrase": "were told"
+    },
+    {
+      "phrase": "told on a call"
+    },
+    {
+      "phrase": "confirmed"
+    },
+    {
+      "phrase": "agreed"
+    },
+    {
+      "phrase": "promised"
+    },
+    {
+      "phrase": "assured me"
+    },
+    {
+      "phrase": "said it would"
+    },
+    {
+      "phrase": "said that"
+    },
+    {
+      "phrase": "would be reported"
+    },
+    {
+      "phrase": "will be reported"
+    },
+    {
+      "phrase": "agreement"
+    },
+    {
+      "phrase": "arrangement"
+    },
+    {
+      "phrase": "your agent"
+    },
+    {
+      "phrase": "your representative"
+    },
+    {
+      "phrase": "customer service said"
+    }
+  ]
+}
