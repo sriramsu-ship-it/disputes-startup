@@ -100,12 +100,13 @@ def test_budget_records_each_call_with_hashes_and_cost():
 
 
 def test_budget_caps_calls_per_case():
+    cap = defaults().llm_max_calls_per_case
     b = CaseBudget(FakeClient([GOOD]), defaults())
-    for _ in range(4):
+    for _ in range(cap):
         b.call("classify", DATA, schemas.CLASSIFY)
     with pytest.raises(LlmUnavailable, match="call cap"):
         b.call("classify", DATA, schemas.CLASSIFY)
-    assert b.calls_made == 4
+    assert b.calls_made == cap
 
 
 def test_error_then_success_retries_once_with_backoff():
