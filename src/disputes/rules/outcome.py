@@ -55,6 +55,7 @@ UPSTREAM_ORIGIN = {
     EscalationReason.EVIDENCE_CONFLICT: "R-10", EscalationReason.CLAIM_UNRESOLVED: "R-10",
     EscalationReason.QUOTE_UNLOCATED: "R-11", EscalationReason.UNADDRESSED_CLAIM: "R-11",
     EscalationReason.DRAFT_INVALID: "R-13", EscalationReason.LLM_UNAVAILABLE: "R-15",
+    EscalationReason.SYSTEM_ERROR: "R-15",
 }
 ROUTE_REASON = {
     Route.ESCALATE_FRAUD: EscalationReason.ID_FRAUD_SUSPECTED,
