@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Overview{% endblock %}
+{% block content %}
+<div class="page-head"><div>
+  <h1>{{ tenant_name }}</h1>
+  <p class="sub">Disputes we are handling for you, with deadline status. Account numbers show the last four digits only.</p>
+</div></div>
+
+<section class="sla-strip" aria-label="Deadline status of open disputes" data-testid="sla">
+  <div class="sla clock-ON_TRACK"><span class="n">{{ dash.sla.ON_TRACK }}</span><span class="l">open and on track</span></div>
+  <div class="sla clock-AT_RISK"><span class="n">{{ dash.sla.AT_RISK }}</span><span class="l">open and at risk</span></div>
+  <div class="sla clock-BREACHED"><span class="n">{{ dash.sla.BREACHED }}</span><span class="l">past the due date</span></div>
+  <div class="sla"><span class="n">{{ dash.completed }}</span><span class="l">completed of {{ dash.total }}</span></div>
+</section>
+
+<div class="two-panels">
+<section class="panel">
+  <h2>Where disputes are now</h2>
+  <table class="grid compact" data-testid="by-state"><tbody>
+    {% for s, n in dash.by_state | dictsort %}<tr><td>{{ label('state', s) }}</td><td class="num">{{ n }}</td></tr>{% else %}<tr><td class="muted">No disputes yet.</td></tr>{% endfor %}
+  </tbody></table>
+</section>
+<section class="panel">
+  <h2>Outcomes of completed disputes</h2>
+  <table class="grid compact" data-testid="by-outcome"><tbody>
+    {% for o, n in dash.by_outcome | dictsort %}<tr><td>{{ label('outcome', o) }}</td><td class="num">{{ n }}</td></tr>{% else %}<tr><td class="muted">None completed yet.</td></tr>{% endfor %}
+  </tbody></table>
+</section>
+</div>
+
+<section class="panel">
+  <h2>Disputes</h2>
+  <table class="queue" data-testid="client-cases">
+    <thead><tr><th scope="col">Case</th><th scope="col">Account</th><th scope="col">Status</th><th scope="col">Deadline</th>
+      <th scope="col" class="num">Our internal target</th><th scope="col" class="num">Bureau due date</th><th scope="col">Outcome</th><th scope="col">Audit record</th></tr></thead>
+    <tbody>{% for c in cases %}
+      <tr class="edge-{{ c.clock_state or 'NONE' }}">
+        <td><a href="/client/cases/{{ c.case_id }}">{{ c.case_id }}</a> <span class="muted small">{{ c.cra or '' }}</span></td>
+        <td class="num">{{ c.account }}</td>
+        <td><span class="chip state-{{ c.state }}">{{ label('state', c.state) }}</span></td>
+        <td>{% if not c.completed %}<span class="chip clock-{{ c.clock_state or 'NONE' }}">{{ label('clock', c.clock_state) }}</span>{% else %}<span class="muted">Closed</span>{% endif %}</td>
+        <td class="num">{{ c.internal_target_date or '—' }}</td><td class="num">{{ c.response_due_date or '—' }}</td>
+        <td>{{ label('outcome', c.final_outcome) if c.final_outcome else '—' }}</td>
+        <td>{% if c.completed %}<a href="/client/cases/{{ c.case_id }}/export.html">View</a>, <a href="/client/cases/{{ c.case_id }}/export.json">JSON</a>{% else %}<span class="muted">When completed</span>{% endif %}</td>
+      </tr>
+    {% else %}<tr><td colspan="8" class="muted">No disputes yet.</td></tr>{% endfor %}</tbody>
+  </table>
+</section>
+{% endblock %}

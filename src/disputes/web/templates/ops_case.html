@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+{% block title %}{{ case.case_id }}{% endblock %}
+{% block mainclass %}case-main{% endblock %}
+{% block content %}
+<article class="casefile" data-case-id="{{ case.case_id }}" data-tenant-id="{{ tenant_id }}"
+         data-idle-cutoff="{{ idle_cutoff_s }}" data-csrf="{{ csrf }}" data-track="{{ 'yes' if actions else 'no' }}">
+
+<header class="case-head">
+  <div class="case-title">
+    <p class="crumb"><a href="/ops/t/{{ tenant_id }}/queue">{{ tenant_name }}</a></p>
+    <h1>{{ case.case_id }}</h1>
+    <p class="case-meta">
+      <span class="chip state-{{ case.state }}" data-testid="case-state">{{ label('state', case.state) }}</span>
+      <span>Control number {{ case.control_number or '—' }}</span>
+      <span>{{ case.cra or '—' }}</span>
+      <span>Account {{ case.account_number or '—' }}</span>
+      <span>Channel {{ case.channel }}</span>
+    </p>
+  </div>
+  {% if ruler %}
+  <div class="ruler" aria-label="Deadline">
+    <div class="ruler-track clock-{{ case.clock_state or 'NONE' }}">
+      {% if ruler.target_pct is not none %}<span class="ruler-mark target" data-at="{{ ruler.target_pct }}"><span>Internal target {{ ruler.target }}</span></span>{% endif %}
+      {% if ruler.today_pct is not none %}<span class="ruler-mark today" data-at="{{ ruler.today_pct }}"><span>Today</span></span>{% endif %}
+    </div>
+    <div class="ruler-ends"><span>Received {{ ruler.received }}</span><span>Due {{ ruler.due }}</span></div>
+    <p class="ruler-status"><span class="chip clock-{{ case.clock_state or 'NONE' }}">{{ label('clock', case.clock_state) }}</span>
+      {% if ruler.past_due %}Due date has passed.{% else %}{{ ruler.days_to_due }} calendar days to the due date{% if ruler.days_to_target is not none %}, {{ ruler.days_to_target }} to the internal target{% endif %}.{% endif %}</p>
+  </div>
+  {% endif %}
+</header>
+
+{% if notice %}<p class="alert alert-ok" role="status">{{ notice }}</p>{% endif %}
+{% if error %}<p class="alert alert-error" role="alert" data-testid="action-error">{{ error }}</p>{% endif %}
+
+<div class="case-grid">
+<div class="case-body">
+
+  <section class="panel" id="flags">
+    <h2>Why the system proposed this</h2>
+    <dl class="kv">
+      <dt>Proposed outcome</dt><dd>{{ label('outcome', decision.outcome or case.proposed_outcome) }}{% if decision.rules_version %} <span class="muted">(rules {{ decision.rules_version }})</span>{% endif %}</dd>
+      <dt>Suspicious content</dt><dd><span class="chip {{ 'chip-warn' if case.suspicion_level == 'HIGH' else 'chip-soft' }}">{{ case.suspicion_level | lower | capitalize }}</span>
+        {% if case.suspicion_level == 'HIGH' %}<span class="muted">A second supervisor approval is required (R-19). The flag cannot change the outcome.</span>{% endif %}</dd>
+      <dt>Categories</dt><dd>{{ (case.categories or []) | join(', ') or '—' }}</dd>
+    </dl>
+    {% if outcome_firings %}
+    <h3>Rules behind the proposal</h3>
+    <ul class="firings">{% for f in outcome_firings %}<li><code>{{ f.rule_id }}</code> v{{ f.rule_version }}{% if f.evidence_ids %}: {% for e in f.evidence_ids %}<a href="#ev-{{ e }}" class="evref">{{ e }}</a>{% endfor %}{% endif %}{% if f.detail %} <span class="muted">{{ f.detail }}</span>{% endif %}</li>{% endfor %}</ul>
+    {% endif %}
+    {% if escalations %}
+    <h3>Escalation reasons</h3>
+    <ul class="escalations" data-testid="escalations">
+      {% for e in escalations %}
+      <li><span class="chip {{ 'chip-fraud' if e.reason == 'ID_FRAUD_SUSPECTED' else 'chip-warn' }}">{{ e.reason }}</span>
+        {% if e.firings %}{% for f in e.firings %}<code>{{ f.rule_id }}</code> v{{ f.rule_version }}{% for ev in f.evidence_ids %} <a href="#ev-{{ ev }}" class="evref">{{ ev }}</a>{% endfor %}{% if f.detail %} <span class="muted">{{ f.detail }}</span>{% endif %}{% endfor %}
+        {% else %}<span class="muted">raised at {{ e.origin }}</span>{% endif %}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% if suspicion.matches %}
+    <h3>Suspicious-content matches</h3>
+    <ul class="matches">{% for m in suspicion.matches %}<li><span class="chip {{ 'chip-warn' if m.level == 'HIGH' else 'chip-soft' }}">{{ m.level }}</span> <code>{{ m.pattern_id }}</code> in {{ m.surface }}: <q>{{ m.excerpt }}</q></li>{% endfor %}</ul>
+    {% endif %}
+  </section>
+
+  <section class="panel" id="acdv">
+    <h2>ACDV as received</h2>
+    <dl class="kv two-col">
+      <dt>Consumer</dt><dd>{{ dispute.consumer_name or '—' }}</dd>
+      <dt>Account</dt><dd>{{ dispute.account_number or case.account_number or '—' }}</dd>
+      <dt>Received</dt><dd>{{ dispute.date_received or case.date_received or '—' }}</dd>
+      <dt>Response due</dt><dd>{{ dispute.response_due_date or case.response_due_date or '—' }}</dd>
+      <dt>Dispute codes</dt><dd>{{ (dispute.dispute_codes or []) | join(', ') or '—' }}</dd>
+      <dt>Disputed months</dt><dd>{{ (dispute.disputed_months or []) | join(', ') or '—' }}</dd>
+      <dt>Raw payload hash</dt><dd class="hash">{{ case.raw_payload_sha256 }}</dd>
+    </dl>
+  </section>
+
+  <section class="panel" id="evidence">
+    <h2>Consumer’s words and our records</h2>
+    <div class="side-by-side">
+      <div class="col-consumer">
+        <h3>What the consumer sent</h3>
+        {% for s in sources %}
+        <figure class="source" id="src-{{ s.source_id }}">
+          <figcaption>{{ s.title }} <span class="muted">({{ s.source_id }}{% if s.sha256 %}, sha256 {{ s.sha256[:12] }}…{% endif %})</span></figcaption>
+          <pre class="doc">{% for seg in s.segments %}{% if seg.claim_id %}<mark id="q-{{ seg.claim_id }}" title="Claim {{ seg.claim_id }}">{{ seg.text }}</mark>{% else %}{{ seg.text }}{% endif %}{% endfor %}</pre>
+        </figure>
+        {% else %}<p class="muted">No consumer text or attachments.</p>{% endfor %}
+      </div>
+      <div class="col-records">
+        <h3>Our records</h3>
+        {% for e in evidence %}
+        <div class="evidence" id="ev-{{ e.evidence_id }}">
+          <p class="ev-head"><strong>{{ e.evidence_id }}</strong> <span class="muted">{{ e.kind }} from {{ e.source }}, retrieved {{ e.retrieved_at }}</span></p>
+          {% if e.fields %}<dl class="kv tight">{% for k, v in e.fields %}<dt>{{ k }}</dt><dd>{{ v }}</dd>{% endfor %}</dl>{% endif %}
+          <p class="hash">sha256 {{ e.sha256 }}</p>
+        </div>
+        {% else %}<p class="muted">No evidence was retrieved for this case.</p>{% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="months">
+    <h2>Month by month</h2>
+    {% if comparison %}
+    <table class="grid" data-testid="comparison">
+      <thead><tr><th scope="col">Month</th><th scope="col" class="num">Days past due</th><th scope="col">Expected rating</th><th scope="col">Reported rating</th><th scope="col">Result</th><th scope="col">Evidence</th></tr></thead>
+      <tbody>{% for m in comparison %}
+      <tr class="res-{{ m.result }}"><td>{{ m.month }}</td><td class="num">{{ m.dpd if m.dpd is not none else '—' }}</td><td>{{ m.expected_rating or '—' }}</td><td>{{ m.reported_rating or '—' }}</td>
+        <td><span class="chip res-{{ m.result }}">{{ m.result | replace('_',' ') | lower | capitalize }}</span></td>
+        <td>{% for e in m.evidence_ids %}<a href="#ev-{{ e }}" class="evref">{{ e }}</a>{% endfor %}</td></tr>
+      {% endfor %}</tbody>
+    </table>
+    {% else %}<p class="muted">No comparison was produced (the case did not reach investigation, or months were undetermined).</p>{% endif %}
+  </section>
+
+  <section class="panel" id="claims">
+    <h2>Claims and findings</h2>
+    {% if claims %}
+    <table class="grid" data-testid="claims">
+      <thead><tr><th scope="col">Claim</th><th scope="col">Quote</th><th scope="col">Finding</th><th scope="col">Evidence or reason</th></tr></thead>
+      <tbody>{% for c in claims %}
+      <tr class="{{ 'needs-finding' if c.claim_id in missing_findings }}">
+        <td><strong>{{ c.claim_id }}</strong> {{ c.text }}<br><span class="muted small">{{ c.claim_type }}{% if c.months %}, {{ c.months | join(', ') }}{% endif %}</span></td>
+        <td>{% if c.span %}<a href="#q-{{ c.claim_id }}">“{{ c.quote }}”</a>{% else %}“{{ c.quote }}” <span class="chip chip-warn">not located</span>{% endif %}<br><span class="muted small">{{ c.source_id }}</span></td>
+        <td>{% if c.finding and c.finding_source %}<span class="chip finding-{{ c.finding }}">{{ c.finding | replace('_',' ') | lower | capitalize }}</span>
+            {% if c.finding_source == 'HUMAN' %}<span class="chip chip-human">entered by reviewer</span>{% endif %}
+          {% else %}<span class="chip chip-warn">Needs a finding</span>{% endif %}</td>
+        <td>{% for e in c.evidence_ids %}<a href="#ev-{{ e }}" class="evref">{{ e }}</a>{% endfor %}{% if c.reason %} {{ c.reason }}{% endif %}</td>
+      </tr>{% endfor %}</tbody>
+    </table>
+    {% else %}<p class="muted">No claims were extracted.</p>{% endif %}
+  </section>
+
+  <section class="panel" id="draft">
+    <h2>Response narrative</h2>
+    {% if needs_human_narrative and not narrative_is_human %}
+      <p class="alert alert-warn">The reviewer must write this narrative: {{ needs_human_narrative }}. Use Edit in the decision panel.</p>
+    {% endif %}
+    {% if system_draft and system_draft.validator_errors %}
+      <details class="validator"><summary>Validator rejected {{ system_draft.validator_errors | length }} item(s)</summary>
+        <ul>{% for v in system_draft.validator_errors %}<li>{{ v }}</li>{% endfor %}</ul></details>
+    {% endif %}
+    {% if narrative %}
+    <ol class="sentences" data-testid="sentences">
+      {% for s in narrative %}
+      <li class="src-{{ s.source }}"><span class="sent-text">{{ s.text }}</span>
+        <span class="sent-meta"><span class="chip src-chip-{{ s.source }}">{{ {'LLM': 'Model', 'TEMPLATE': 'Template', 'HUMAN': 'Reviewer'}.get(s.source, s.source) }}</span>
+          {% if s.template_id %}<span class="muted small">{{ s.template_id }}</span>{% endif %}
+          {% for e in s.evidence_ids %}<a href="#ev-{{ e }}" class="evref">{{ e }}</a>{% endfor %}
+          {% for q in s.quote_spans %}<span class="muted small">quote {{ q[0] }} [{{ q[1] }}–{{ q[2] }}]</span>{% endfor %}</span></li>
+      {% endfor %}
+    </ol>
+    {% else %}<p class="muted">No narrative yet.</p>{% endif %}
+  </section>
+
+  {% if prior %}
+  <section class="panel" id="prior">
+    <h2>Prior linked case</h2>
+    <p><a href="/ops/t/{{ tenant_id }}/cases/{{ prior.case_id }}">{{ prior.case_id }}</a>, received {{ prior.date_received }}: <span class="chip state-{{ prior.state }}">{{ label('state', prior.state) }}</span>
+      outcome {{ label('outcome', prior.final_outcome or prior.proposed_outcome) }}.</p>
+  </section>
+  {% endif %}
+
+  <section class="panel" id="history">
+    <h2>History</h2>
+    {% if packages %}
+    <h3>Response packages</h3>
+    <ul class="plain">{% for p in packages %}<li data-testid="package">Version {{ p.package_version }}: {{ label('outcome', p.outcome) }}, authorised by {{ p.dfAuthorizedName }}, {{ p.at }}{% if p.change_reason %}; changed because {{ p.change_reason.reason_code }}: {{ p.change_reason.reason_text }}{% endif %} <span class="hash">{{ p.sha256[:16] }}…</span></li>{% endfor %}</ul>
+    {% endif %}
+    <ol class="timeline">
+      {% for t in timeline %}
+      <li><time>{{ t.at.strftime('%Y-%m-%d %H:%M:%S') }} UTC</time> <span class="t-type">{{ t.type | replace('_',' ') | lower | capitalize }}</span>
+        {% if t.from %}{{ label('state', t.from) }} to {{ label('state', t.to) }}{% endif %}{% if t.action %} {{ t.action }}{% endif %}
+        <span class="muted">by {{ t.actor }}{% if t.actor_role %} ({{ t.actor_role }}){% endif %}</span>{% if t.reason %}: {{ t.reason }}{% endif %}</li>
+      {% endfor %}
+    </ol>
+    <p class="exports"><a class="btn" href="/ops/t/{{ tenant_id }}/cases/{{ case.case_id }}/export.html">Open audit export</a>
+       <a class="btn" href="/ops/t/{{ tenant_id }}/cases/{{ case.case_id }}/export.json">Download export (JSON)</a></p>
+  </section>
+</div>
+
+<aside class="decision" aria-label="Decision">
+  <h2>Decision</h2>
+  <dl class="kv tight">
+    <dt>Proposal</dt><dd>{{ label('outcome', proposal.outcome) if proposal.outcome else 'None (escalated)' }}</dd>
+    <dt>Working decision</dt><dd data-testid="working-outcome">{{ label('outcome', working.outcome) if working.outcome else 'Not chosen' }}{% if departs %} <span class="chip chip-human">changed by reviewer</span>{% endif %}</dd>
+    {% if working.corrections %}<dt>Corrections</dt><dd>{% for c in working.corrections %}{{ c.month }}: {{ c.reported or '—' }} to {{ c.corrected }}<br>{% endfor %}</dd>{% endif %}
+  </dl>
+  {% if blockers %}<div class="blockers" data-testid="blockers"><p><strong>Before you can approve</strong></p><ul>{% for b in blockers %}<li>{{ b }}</li>{% endfor %}</ul></div>{% endif %}
+
+  {% if not actions %}<p class="muted">{% if me.role.value in ('AUDITOR',) %}Read-only: auditors can view and export.{% else %}No actions are available in this state.{% endif %}</p>{% endif %}
+
+  {% if 'approve' in actions %}
+  <form method="post" action="/ops/t/{{ tenant_id }}/cases/{{ case.case_id }}/actions/approve" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="version" value="{{ case.version }}">
+    <button class="btn btn-primary" type="submit" {% if blockers %}aria-describedby="blocked-note"{% endif %}>Approve {{ label('outcome', working.outcome) if working.outcome else '' }}</button>
+    {% if blockers %}<p id="blocked-note" class="hint">Approval will be refused until the items above are done.</p>{% endif %}
+  </form>
+  {% endif %}
+
+  {% if 'second_approve' in actions %}
+  <form method="post" action="/ops/t/{{ tenant_id }}/cases/{{ case.case_id }}/actions/second_approve" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="version" value="{{ case.version }}">
+    <p class="hint">Second approval (R-19). You cannot give it if you approved or edited this case.</p>
+    <button class="btn btn-primary" type="submit">Give second approval</button>
+  </form>
+  <details><summary>Send back to review</summary>
+  <form method="post" action="/ops/t/{{ tenant_id }}/cases/{{ case.case_id }}/actions/reject_second" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="version" value="{{ case.version }}">
+    <label for="rj-text">Reason (at least 10 characters)</label><textarea id="rj-text" name="reason_text" rows="2" required minlength="10"></textarea>
+    <button class="btn" type="submit">Send back</button>
+  </form></details>
+  {% endif %}
+
+  {% if 'take' in actions %}
+  <form method="post" action="/ops/t/{{ tenant_id }}/cases/{{ case.case_id }}/actions/take" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="version" value="{{ case.version }}">
+    <button class="btn btn-primary" type="submit">Take for review</button>
+  </form>
+  {% endif %}
+
+  {% if 'edit' in actions %}
+  <details class="edit" {% if error_field and error_field != 'approval' %}open{% endif %}>
+    <summary>Edit decision</summary>
+    <form method="post" action="/ops/t/{{ tenant_id }}/cases/{{ case.case_id }}/actions/edit" class="stack">
+      <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="version" value="{{ case.version }}">
+      <label for="ed-outcome">Outcome</label>
+      <select id="ed-outcome" name="outcome">
+        {% for o in ('VERIFIED_AS_REPORTED','MODIFY','DELETE') %}<option value="{{ o }}" {% if working.outcome == o %}selected{% endif %}>{{ label('outcome', o) }}</option>{% endfor %}
+      </select>
+      <fieldset><legend>Corrected payment ratings (Modify only)</legend>
+        {% set rows = working.corrections + [{}] %}
+        {% for c in rows %}
+        <div class="corr-row">
+          <input name="corr_month_{{ loop.index }}" placeholder="YYYY-MM" value="{{ c.month or '' }}" aria-label="Month {{ loop.index }}">
+          <input name="corr_reported_{{ loop.index }}" placeholder="reported" value="{{ c.reported or '' }}" aria-label="Reported rating {{ loop.index }}">
+          <input name="corr_corrected_{{ loop.index }}" placeholder="corrected" value="{{ c.corrected or '' }}" aria-label="Corrected rating {{ loop.index }}">
+        </div>
+        {% endfor %}
+      </fieldset>
+      {% if claims %}
+      <fieldset><legend>Claim findings</legend>
+        {% for c in claims %}
+        <div class="finding-row{{ ' needs-finding' if c.claim_id in missing_findings }}">
+          <label for="f-{{ c.claim_id }}">{{ c.claim_id }}{% if c.claim_id in missing_findings %} (needs a finding){% endif %}</label>
+          <select id="f-{{ c.claim_id }}" name="finding__{{ c.claim_id }}">
+            <option value="">Keep as is</option>
+            {% for f in ('CONTRADICTED','SUPPORTED','NOT_ADDRESSABLE') %}<option value="{{ f }}">{{ f | replace('_',' ') | lower | capitalize }}</option>{% endfor %}
+          </select>
+          <input name="finding_ev__{{ c.claim_id }}" placeholder="Evidence IDs, comma separated" aria-label="Evidence IDs for {{ c.claim_id }}">
+          <input name="finding_reason__{{ c.claim_id }}" placeholder="Reason (required for Not addressable)" aria-label="Reason for {{ c.claim_id }}">
+        </div>
+        {% endfor %}
+      </fieldset>
+      {% endif %}
+      <label for="ed-narr">Narrative written by you{% if needs_human_narrative %} (required){% else %} (optional; replaces the draft){% endif %}</label>
+      <textarea id="ed-narr" name="narrative" rows="5">{% if narrative_is_human %}{% for s in narrative %}{{ s.text }} {% endfor %}{% endif %}</textarea>
+      <p class="hint">Limit {{ cfg.narrative_max_words }} words. Your sentences are marked as written by a person.</p>
+      {% include "_reason.html" %}
+      <button class="btn" type="submit">Save edits</button>
+    </form>
+  </details>
+  {% endif %}
+
+  {% if 'escalate' in actions %}
+  <details><summary>Escalate to a supervisor</summary>
+  <form method="post" action="/ops/t/{{ tenant_id }}/cases/{{ case.case_id }}/actions/escalate" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="version" value="{{ case.version }}">
+    <label for="es-text">Why (at least 10 characters)</label><textarea id="es-text" name="reason_text" rows="2" required minlength="10"></textarea>
+    <button class="btn" type="submit">Escalate</button>
+  </form></details>
+  {% endif %}
+
+  {% if 'out_of_scope' in actions %}
+  <details><summary>Mark out of scope</summary>
+  <form method="post" action="/ops/t/{{ tenant_id }}/cases/{{ case.case_id }}/actions/out_of_scope" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="version" value="{{ case.version }}">
+    {% include "_reason.html" %}
+    <button class="btn" type="submit">Mark out of scope</button>
+  </form></details>
+  {% endif %}
+
+  {% if 'reopen' in actions %}
+  <details><summary>Change after submission</summary>
+  <form method="post" action="/ops/t/{{ tenant_id }}/cases/{{ case.case_id }}/actions/reopen" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="version" value="{{ case.version }}">
+    <p class="hint">Reopens the case for review. The next approval writes a new package version that records this reason.</p>
+    {% include "_reason.html" %}
+    <button class="btn" type="submit">Reopen for a change</button>
+  </form></details>
+  {% endif %}
+
+  {% if reviews %}
+  <h3>Reviewer record</h3>
+  <ol class="reviews">{% for r in reviews %}<li><strong>{{ r.action | replace('_',' ') | lower | capitalize }}</strong> by {{ r.actor_name }} ({{ r.actor_role | lower }}){% if r.reason_code %}, {{ r.reason_code }}{% endif %}{% if r.reason_text %}: {{ r.reason_text }}{% endif %}</li>{% endfor %}</ol>
+  {% endif %}
+</aside>
+</div>
+</article>
+{% endblock %}
+{% block scripts %}<script src="/static/review.js" defer></script>{% endblock %}

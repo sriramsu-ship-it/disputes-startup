@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Disputes{% endblock %} (synthetic)</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="{% block bodyclass %}{% endblock %}">
+<div class="synthetic-banner" role="note">Synthetic data. No real consumers, accounts or bureaus. Nothing leaves this system.</div>
+<header class="topbar">
+  <a class="brand" href="/">Dispute desk</a>
+  {% if me %}
+    {% if me.role.value != 'CLIENT_VIEWER' %}
+    <nav class="mainnav" aria-label="Workbench">
+      {% if tenants %}
+      <form class="tenant-switch" method="get" action="/ops">
+        <label for="tenant-select">Client</label>
+        <select id="tenant-select" data-switch-tenant>
+          {% for t in tenants %}<option value="{{ t }}" {% if t == tenant_id %}selected{% endif %}>{{ t }}</option>{% endfor %}
+        </select>
+        <noscript><span class="hint">Pick a client from the list on the queue page.</span></noscript>
+      </form>
+      {% endif %}
+      {% if tenant_id %}<a href="/ops/t/{{ tenant_id }}/queue">Queue</a>{% endif %}
+      {% if tenant_id and me.role.value in ('SUPERVISOR','ADMIN') %}<a href="/ops/t/{{ tenant_id }}/metrics.csv">Review metrics (CSV)</a>{% endif %}
+      {% if me.role.value == 'ADMIN' %}<a href="/ops/admin">Config</a>{% endif %}
+    </nav>
+    {% else %}
+    <nav class="mainnav" aria-label="Portal"><a href="/client">Overview</a></nav>
+    {% endif %}
+    <div class="whoami">
+      <span>{{ me.display_name }}</span><span class="role-chip">{{ me.role.value | replace('_',' ') | lower | capitalize }}</span>
+      <form method="post" action="/logout"><button class="linklike" type="submit">Sign out</button></form>
+    </div>
+  {% endif %}
+</header>
+<main id="main" class="{% block mainclass %}{% endblock %}">
+{% block content %}{% endblock %}
+</main>
+<script src="/static/app.js" defer></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

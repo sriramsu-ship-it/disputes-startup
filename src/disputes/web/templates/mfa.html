@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Verify sign-in{% endblock %}
+{% block bodyclass %}auth{% endblock %}
+{% block content %}
+<section class="auth-card">
+  <h1>Enter your code</h1>
+  <p class="lede">Signing in as {{ name }}. Open your authenticator app and enter the current 6-digit code.</p>
+  {% if not enrolled %}
+    <p class="alert alert-error" role="alert">Your account has no authenticator set up, so you cannot sign in yet. Ask an admin to enrol you.</p>
+  {% endif %}
+  {% if error %}<p class="alert alert-error" role="alert">{{ error }}</p>{% endif %}
+  {% if dev_code %}
+    <p class="alert alert-dev" data-testid="dev-totp">Demo only (synthetic mode): the current code is <strong>{{ dev_code }}</strong>.</p>
+  {% endif %}
+  <form method="post" action="/login/mfa" class="stack">
+    <label for="code">6-digit code</label>
+    <input id="code" name="code" inputmode="numeric" pattern="[0-9 ]{6,7}" autocomplete="one-time-code" required autofocus>
+    <button class="btn btn-primary" type="submit">Verify and sign in</button>
+  </form>
+  <p class="hint"><a href="/login">Start again</a></p>
+</section>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Queue, {{ tenant_name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Review queue</h1>
+    <p class="sub">{{ tenant_name }}. Sorted by identity-fraud priority, then deadline risk, then internal target date</p>
+  </div>
+  <form class="filters" method="get" action="/ops/t/{{ tenant_id }}/queue">
+    <label for="f-state">State</label>
+    <select id="f-state" name="state">
+      <option value="OPEN" {% if state == 'OPEN' %}selected{% endif %}>All open</option>
+      <option value="ALL" {% if state == 'ALL' %}selected{% endif %}>Everything</option>
+      {% for s in states %}<option value="{{ s }}" {% if s == state %}selected{% endif %}>{{ label('state', s) }}</option>{% endfor %}
+    </select>
+    <label for="f-flag">Flag</label>
+    <select id="f-flag" name="flag">
+      <option value="">Any</option>
+      {% for f in flags %}<option value="{{ f }}" {% if f == flag %}selected{% endif %}>{{ f }}</option>{% endfor %}
+    </select>
+    <button class="btn" type="submit">Apply</button>
+  </form>
+</div>
+
+{% if rows %}
+<table class="queue" data-testid="queue">
+  <thead><tr>
+    <th scope="col">Case</th><th scope="col">Account</th><th scope="col">State</th><th scope="col">Deadline</th>
+    <th scope="col" class="num">Internal target</th><th scope="col" class="num">Due</th>
+    <th scope="col">Flags</th><th scope="col">Proposed</th>
+  </tr></thead>
+  <tbody>
+  {% for r in rows %}
+  <tr class="edge-{{ r.clock_state or 'NONE' }}{% if r.priority >= 100 %} is-priority{% endif %}" data-case-id="{{ r.case_id }}">
+    <td><a class="case-link" href="/ops/t/{{ tenant_id }}/cases/{{ r.case_id }}">{{ r.case_id }}</a>
+        <span class="muted small">{{ r.control_number or "" }}, {{ r.cra or "" }}</span></td>
+    <td class="num">{{ mask_account(r.account_number) }}</td>
+    <td><span class="chip state-{{ r.state }}">{{ label('state', r.state) }}</span></td>
+    <td><span class="chip clock-{{ r.clock_state or 'NONE' }}">{{ label('clock', r.clock_state) }}</span></td>
+    <td class="num">{{ r.internal_target_date or '—' }}</td>
+    <td class="num">{{ r.response_due_date or '—' }}</td>
+    <td class="flags">
+      {% if r.priority >= 100 %}<span class="chip chip-fraud">ID fraud suspected</span>{% endif %}
+      {% if r.suspicion_level == 'HIGH' %}<span class="chip chip-warn">Suspicious content: high</span>{% elif r.suspicion_level == 'LOW' %}<span class="chip chip-soft">Suspicious content: low</span>{% endif %}
+      {% if r.repeat_of_case_id %}<span class="chip chip-soft">Repeat</span>{% endif %}
+      {% for e in r.escalation_reasons if e != 'ID_FRAUD_SUSPECTED' %}<span class="chip chip-soft">{{ e }}</span>{% endfor %}
+    </td>
+    <td>{{ label('outcome', r.proposed_outcome) }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<section class="panel empty"><p>No cases match these filters. Choose “All open” or “Everything” to widen the list.</p></section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ status }}{% endblock %}
+{% block content %}
+<section class="panel narrow">
+  <h1>{% if status == 404 %}Not found{% elif status == 403 %}Not allowed{% elif status == 200 %}Nothing to show{% else %}Something went wrong{% endif %}</h1>
+  <p>{{ message }}</p>
+  <p><a href="/">Go to your start page</a></p>
+</section>
+{% endblock %}
