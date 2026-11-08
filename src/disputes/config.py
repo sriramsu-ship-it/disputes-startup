@@ -26,7 +26,8 @@ class Config:
     # R-15 LLM budget
     llm_call_timeout_s: float = 60.0
     llm_case_budget_s: float = 90.0
-    llm_max_calls_per_case: int = 4
+    # 5 = four LLM steps (ADR-005) + one draft retry. PRD R-15 says 4; PM to confirm (agents stage notes).
+    llm_max_calls_per_case: int = 5
     llm_retries: int = 1
     # R-12 draft
     narrative_max_words: int = 150

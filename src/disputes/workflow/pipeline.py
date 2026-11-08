@@ -339,6 +339,7 @@ def _run_steps(run: _Run) -> None:
     if clock is not None and clock.state == ClockState.BREACHED:
         intake_esc.append(E.BREACHED)
     suspicion = deps.detect_suspicious(d, findings)
+    run.attachment_findings = findings
     intake = IntakeResult(valid=E.INTAKE_INVALID not in intake_esc, escalations=tuple(dict.fromkeys(intake_esc)),
                           clock=clock, attachment_findings=findings, errors=tuple(v_errors))
     run.add_reasons(intake.escalations, "intake")
@@ -485,10 +486,29 @@ def _investigate(run: _Run, claims: list) -> list:
     return evidence
 
 
+def _recheck_suspicion(run: _Run) -> None:
+    """R-14: intake runs the detector before any model call, so a model flag raised later
+    (classify / claims) is applied here by re-running the detector with llm_flag=True."""
+    budget = getattr(run, "budget", None)
+    if budget is None or getattr(run, "llm_flag_applied", False) or not getattr(budget, "suspicious_flag", False):
+        return
+    run.llm_flag_applied = True
+    suspicion = run.deps.detect_suspicious(run.dispute, getattr(run, "attachment_findings", ()), llm_flag=True)
+    with run.conn.transaction():
+        a = run.artifact(ArtifactKind.SUSPICION, suspicion)
+        run.fields(suspicion_level=str(suspicion.level))
+        run.event("SUSPICION_CHECKED", {"rule_id": "R-14", "level": suspicion.level, "llm_flag": True,
+                                        "patterns_version": suspicion.patterns_version,
+                                        "matches": len(suspicion.matches), "artifact": a})
+
+
 def _decide(run: _Run, claims: list, evidence: list):
+    _recheck_suspicion(run)
     upstream = tuple(r for r in run.reasons)
+    budget = getattr(run, "budget", None)
     decision = run.deps.decide(classification=run.classification, comparisons=run.comparisons,
-                               evidence=evidence, claims=claims, upstream_escalations=upstream)
+                               evidence=evidence, claims=claims, upstream_escalations=upstream,
+                               llm_note_flag=bool(getattr(budget, "note_conflict", False)))
     run.decision = decision
     run.decided_with = upstream
     run.add_reasons(decision.escalation_reasons, "decide")

@@ -177,7 +177,7 @@ def test_invalid_twice_returns_invalid_draft():
 
 def test_retry_skipped_when_call_cap_reached_is_invalid_not_silent():
     fc = FakeClient([draft_out(text="The cycle shows lateness.", ids=(), quotes=[])])
-    b = CaseBudget(fc, defaults())          # default cap 4
+    b = CaseBudget(fc, defaults().with_overrides(llm_max_calls_per_case=4))   # cap 4 explicit
     for _ in range(3):
         b._calls += 1                        # classify, extract, map already spent
     d = draft_narrative(VERIFY, [CLAIM], EV, b, source_texts=SRC)
