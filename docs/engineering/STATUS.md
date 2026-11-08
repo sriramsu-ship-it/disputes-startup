@@ -1,4 +1,30 @@
-# Engineering Status
+# Engineering status
+
+## 2026-11-07 (integrator): Stages 1-3 built and merged; platform runs end to end on synthetic data
+**Merged to main:** foundation #1, intake #2, PM PRD v1.2 #3, rules #4, platform-core #5, contract fixes #6/#7, generator v1 #8, agents #9, LLM-flag wiring #10, web #11, false-verify guards #12. Module notes: `docs/engineering/stage-notes/`.
+
+**End-to-end run** (fresh DB; `migrate`, `seed-demo`, `ingest --fixture-dates` for 3 synthetic clients, `work`, `anchor`, `verify`; offline LLM backend):
+| Set | Cases | Outcome agreement with generator labels | False verifies | Notes |
+|---|---|---|---|---|
+| v0 `seed20261019_n200` | 196 (+4 duplicates ignored) | 196/196 | 0 | offline heuristics were written against v0 templates, so this is not independent |
+| v1 `v1_seed20261107_n200` | 196 | 142/196 (72.4%) | 0 (was 5 before #12) | guards in #12 were designed from this set's errors |
+| v1 holdout, seed 20261108 (not committed) | 196 | 142/195 (72.8%) | 0 | fresh seed; same scenario quotas |
+- All disagreements on v1 are **over-escalation** (45 should-verify and 8-9 should-modify cases escalated, mostly CLAIM_UNRESOLVED / EVIDENCE_CONFLICT / CLASS_CONFLICT from the offline model). They cost reviewer time, not consumer harm.
+- 600 jobs processed in ~25s, 0 dead; audit verify: global + 588 case chains intact (8,387 events), anchor matches; insert-only triggers present.
+- UI checked at 1366px (queue, case view, client portal); client of tenant A gets 404 on tenant B's case.
+
+**What these numbers are not:** labels come from the generator's own oracle (U35) and letters from our own sentence banks (U20). The offline backend is a deterministic stand-in, not the product model. No B-gate (Appendix B) is claimed. Real quality needs the Anthropic backend (blocked on ZDR confirmation, ADR-006), the frozen T1 set and human-labelled T3 (Stage 4, needs Sriram's approval).
+
+**Known issues / next:**
+1. Client portal: "completed" count includes OUT_OF_SCOPE while the outcomes panel shows none completed (inconsistent).
+2. Clock state is evaluated only at intake; a periodic job must refresh AT_RISK/BREACHED (queue order and portal SLA go stale).
+3. Contract requests still open: `ReviewRecord` dataclass, `ReviewAction.REOPEN_AFTER_SUBMISSION`, `Draft.human_authored`, `Settings.cookie_secure`, `Classification.llm_suspicious`; shared effective-config loader for pipeline + web.
+4. Before any real data: RLS + per-tenant keys (ADR-008 rev), app DB role with INSERT/SELECT-only on audit tables, server-side session revocation, login rate limiting, TOTP enrolment, attachment originals stored.
+5. Synthetic SoR records carry a fixed furnisher name / tenant_id from the generator regardless of which client they are ingested for (data artifact, not a cross-tenant read).
+6. PRD questions raised by agents (call cap 4 vs 5 — set to 5; SYSTEM_ERROR reason; one-part names; free text required?; >10 attachments; holiday due dates; edit/approve split; dfAuthorizedName on two-approval cases) — PM.
+
+---
+
 
 **Last updated:** 2026-10-20 by developer (Stage 0 complete, awaiting Sriram's gate review)
 

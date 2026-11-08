@@ -8,7 +8,7 @@ Format:
 - Produced: <file path(s)>
 - Need back: <specific ask>
 - Open questions: <list or "none">
-- Status: OPEN
+- Status: RESOLVED 2026-11-07 (build merged; see STATUS.md 2026-11-07). PM follow-ups below.
 ```
 
 ---
@@ -190,4 +190,10 @@ Format:
   - developer (parallel module agents): build Stages 1-3 per `platform-architecture.md`, one PR per module; notes in `docs/engineering/stage-notes/`.
   - product-manager: PRD v1.2 for the managed-service model (buyer, pricing unit, analyst role, client portal, SLA, service-provider obligations); see the PM entry below.
 - Open questions: Stage 0 trial labelling and ADR-006 ZDR confirmation are still Sriram's to do; neither blocks the synthetic build.
+- Status: OPEN
+
+## 2026-11-07 | developer (integrator) -> Sriram, product-manager | Stages 1-3 merged; e2e results; decisions needed
+- Produced: platform on main (PRs #1-#12); `docs/engineering/STATUS.md` (2026-11-07 section with e2e numbers and known issues); module notes in `docs/engineering/stage-notes/`; PM memo `docs/product/managed-service-model.md` and PRD v1.2.
+- Need back (Sriram): decisions D1-D10 in `docs/product/managed-service-model.md` §12 (ICP, start buyer discovery now, pivot kill criteria, pricing structure to test, client pre-approval of DELETE, analyst model, counsel scope, SOC 2 path); confirm ZDR for the Anthropic key (ADR-006) to enable a real-model run; approve Stage 4 (eval harness + frozen T1/T3) when ready.
+- Need back (PM): answers to the PRD questions in STATUS.md "Known issues" item 6; add SYSTEM_ERROR to the §6 reason list; renumber the eval-methodology ADR reference (ADR-011 is now platform modules).
 - Status: OPEN
