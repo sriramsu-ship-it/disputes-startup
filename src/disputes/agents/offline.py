@@ -37,17 +37,22 @@ _FRAUD = re.compile(
     r"identity theft|identity fraud|stolen identity|not my account|not mine\b|isn't mine|never opened|"
     r"do not recogni[sz]e|don't recogni[sz]e|never done business|someone used my|somebody used my|"
     r"opened (this|it|the account)? ?in my name|without my (permission|consent|knowledge)|"
-    r"fraudulent(ly)? (account|opened)|none of these payments are mine", re.I)
+    r"fraudulent(ly)? (account|opened)|none of these payments are mine|"
+    r"with my (details|identity|information|personal information)|used my (name|identity|information|details)|"
+    r"pretending to be me|impersonat|never signed|no idea what this account|not (his|hers|theirs)\b|"
+    r"(as|was) fraud\b|wallet was stolen", re.I)
 _PH = re.compile(
     r"\blate\b|on time|payment history|past due|days late|\bbehind\b|\bpaid\b|\bpayments?\b|"
-    r"\binstall?ments?\b|deferr?al|forbearance|hardship|\bdelinquen", re.I)
+    r"\binstall?ments?\b|deferr?al|forbearance|hardship|\bdelinquen|\bpay\b|last payment", re.I)
 _BAL_STRICT = re.compile(
     r"\bbalance (of \$[\d,.]+ )?(is|was|should|shows|of \$[\d,.]+ is)\b.*\b(too high|wrong|incorrect|not|should)\b|"
     r"\bbalance should be\b|\b(i|we) (do not|don't) owe\b|\bowe (only|nothing|less)\b|"
-    r"\b(amount|balance) (you )?(report|reported|show|shown)\b.*\b(wrong|incorrect|too high)\b", re.I)
+    r"\b(amount|balance) (you )?(report|reported|show|shown)\b.*\b(wrong|incorrect|too high)\b|"
+    r"\bowe \$[\d,]+|\boutstanding\b.*\btoo high\b|\boverstated\b", re.I)
 _BAL_LOOSE = re.compile(r"\bbalance\b|\bamount owed\b", re.I)
 _STATUS = re.compile(r"\b(should (be|show) (as )?(closed|open|paid in full)|charged? off|account status|"
-                     r"(was|is) closed\b|paid in full|settled)\b", re.I)
+                     r"(was|is) closed\b|paid in full|settled|closed (this|the|my) (card|account|loan)|"
+                     r"reported as closed|show(s|ing)? (it|the account) (as )?open)\b", re.I)
 _OTHER = re.compile(r"\baddress\b|date of birth|\bname is (wrong|misspelled|incorrect)|"
                     r"\bspelled\b|date opened|\bemployer\b", re.I)
 
@@ -76,7 +81,7 @@ def classify(data: dict) -> dict:
             continue                            # instructions are data to report, not content to classify
         if _FRAUD.search(u):
             fraud = True
-        if _PH.search(u) and not _is_statement_row(u):
+        if _PH.search(re.sub(r"paid in full", "", u, flags=re.I)) and not _is_statement_row(u):
             cats.add("PAYMENT_HISTORY")
         if (_BAL_LOOSE if is_ft else _BAL_STRICT).search(u):
             cats.add("BALANCE")
@@ -122,7 +127,7 @@ _CLAIM_KW = re.compile(
     r"\bpaid\b|\bpay(ment|ments)?\b|\binstall?ments?\b|\blate\b|on time|\bbehind\b|past due|"
     r"\bbalance\b|\$\d|\bowe\b|deferr?al|forbearance|hardship|\bplan\b|\bagree(d|ment)?\b|representative|"
     r"told me|promised|not my account|never opened|recogni[sz]e|identity|in my name|someone used|"
-    r"somebody|closed|charged? off|settled", re.I)
+    r"somebody|closed|charged? off|settled|my details|pretending|never signed|stolen", re.I)
 _AGREE = re.compile(r"deferr?al|forbearance|hardship|\bplan\b|\bagree(d|ment)\b|representative|told me|promised|waive", re.I)
 _AMOUNT = re.compile(r"\$\s?\d|\bbalance\b|\bowe\b", re.I)
 _STATUS_CLAIM = re.compile(r"never\s+(once\s+)?(been\s+)?late|not my account|never opened|recogni[sz]e|"

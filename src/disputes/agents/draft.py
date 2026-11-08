@@ -57,7 +57,8 @@ def default_source_texts(evidence: list[Evidence], claims: list[Claim] = ()) -> 
 
 
 def _evidence_brief(e: Evidence) -> dict:
-    content = {k: v for k, v in (e.content or {}).items() if k not in ("extracted_text", "text", "transactions")}
+    content = {k: v for k, v in (e.content or {}).items() if k not in ("extracted_text", "text", "transactions",
+                                                                  "ledger_transactions", "cycles", "metadata")}
     return {"evidence_id": e.evidence_id, "kind": e.kind, "content": content}
 
 

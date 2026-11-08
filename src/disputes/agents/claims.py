@@ -64,7 +64,8 @@ def extract_claims(dispute: Dispute, budget) -> tuple[list[Claim], tuple[Escalat
 
 
 def _evidence_view(e: Evidence) -> dict:
-    return {"evidence_id": e.evidence_id, "kind": e.kind, "source": e.source, "content": e.content}
+    content = {k: v for k, v in (e.content or {}).items() if k not in ("transactions", "ledger_transactions")}
+    return {"evidence_id": e.evidence_id, "kind": e.kind, "source": e.source, "content": content}
 
 
 def map_data(claims: list[Claim], evidence: list[Evidence]) -> dict:

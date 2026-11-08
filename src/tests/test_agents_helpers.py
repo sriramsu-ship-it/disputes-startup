@@ -31,29 +31,13 @@ def _shift(month: str, k: int) -> str:
 
 
 def build_evidence(dispute: Dispute, account: dict | None, months) -> list[Evidence]:
-    out: list[Evidence] = []
-    if account:
-        out.append(_ev("EV-ACCOUNT", "account", {k: account.get(k) for k in
-                                                ("account_number", "product", "open_date", "scheduled_payment")}))
-        window = {_shift(m, k) for m in months for k in range(-2, 3)}
-        for c in account.get("cycles") or []:
-            if c["cycle_month"] in window:
-                out.append(_ev(f"EV-CYCLE-{c['cycle_month']}", "cycle", dict(c)))
-        out.append(_ev("EV-PROFILE", "account", {"profile": {c["cycle_month"]: c["reported_rating"]
-                                                            for c in account.get("cycles") or []}}))
-        for i, n in enumerate(account.get("notes") or [], start=1):
-            out.append(_ev(f"EV-NOTE-{i}", "note", dict(n)))
-        for i, n in enumerate(account.get("free_text_notes") or [], start=1):
-            out.append(_ev(f"EV-FTNOTE-{i}", "free_text_note", dict(n)))
-    for a in dispute.attachments:
-        out.append(_ev(f"EV-ATT-{a.attachment_id}", "attachment",
-                       {"attachment_id": a.attachment_id, "file_name": a.file_name,
-                        "extracted_text": a.extracted_text}, source="acdv"))
-    out.append(_ev("EV-ACDV", "acdv", {"control_number": dispute.control_number,
-                                       "dispute_codes": list(dispute.dispute_codes),
-                                       "disputed_months": list(dispute.disputed_months),
-                                       "free_text": dispute.free_text}, source="acdv"))
-    return out
+    """Evidence via the real rules.evidence.gather_evidence (merged on main) over a one-account SoR."""
+    from disputes.rules.evidence import gather_evidence
+
+    class _Sor:
+        def get_account(self, n):
+            return account if account and account.get("account_number", n) == n else None
+    return gather_evidence(dispute, _Sor(), sorted(months), NOW)
 
 
 def load_fixture_cases(path: Path = FIXTURES):
