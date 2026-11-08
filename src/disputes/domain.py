@@ -44,6 +44,7 @@ class EscalationReason(StrEnum):
     UNADDRESSED_CLAIM = "UNADDRESSED_CLAIM"
     DRAFT_INVALID = "DRAFT_INVALID"
     LLM_UNAVAILABLE = "LLM_UNAVAILABLE"
+    SYSTEM_ERROR = "SYSTEM_ERROR"          # fail-safe: unexpected pipeline/job failure (platform-core; PM to add to PRD list)
 
 
 class Category(StrEnum):
@@ -225,7 +226,7 @@ class Classification:
 class Evidence:
     """R-08 evidence item. `content` is JSON-serialisable."""
     evidence_id: str           # e.g. "EV-ACCOUNT", "EV-CYCLE-2026-01", "EV-NOTE-1", "EV-ATT-A1"
-    kind: str                  # "account" | "cycle" | "ledger" | "note" | "free_text_note" | "attachment" | "acdv"
+    kind: str                  # "account" | "cycle" (includes that month's transactions) | "profile" | "note" | "free_text_note" | "attachment" | "acdv"
     source: str                # "mock_sor" | "acdv" | ...
     retrieved_at: datetime
     sha256: str

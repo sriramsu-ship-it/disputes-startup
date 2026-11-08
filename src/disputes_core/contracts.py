@@ -80,7 +80,7 @@ def acdv_to_dispute(envelope: dict, tenant_id: str = "synthetic-tenant-0") -> Di
     a = envelope["acdv"]
     c = a.get("consumer") or {}
     first, last = (c.get("first_name") or "").strip(), (c.get("last_name") or "").strip()
-    name = f"{first} {last}".strip() or None
+    name = f"{first} {last}" if first and last else None   # R-02: a blank part is a missing required field (intake C1)
     return Dispute(
         tenant_id=tenant_id, channel="ACDV", source_schema_version=ver,
         raw_payload_sha256=hashlib.sha256(canonical_json(a).encode("utf-8")).hexdigest(),
@@ -92,7 +92,10 @@ def acdv_to_dispute(envelope: dict, tenant_id: str = "synthetic-tenant-0") -> Di
         disputed_months=tuple(a.get("disputed_months") or ()),
         free_text=a.get("free_text"),
         attachments=tuple(Attachment(x["attachment_id"], x["file_name"], x["media_type"], x["page_count"],
-                                     x["extracted_text"], x["sha256"], dict(x.get("metadata") or {}))
+                                     x["extracted_text"], x["sha256"],
+                                     # render hints carried for R-03 hidden-text detection (intake C2)
+                                     {**dict(x.get("metadata") or {}),
+                                      **({"render_hints": x["render_hints"]} if x.get("render_hints") else {})})
                           for x in a.get("attachments") or ()),
     )
 
