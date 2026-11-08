@@ -1,0 +1,16 @@
+{
+  "table_id": "outcome_words",
+  "table_version": "0.1.0",
+  "verified": false,
+  "source": "NONE - written by the developer (agents module) on 2026-11-07 from PRD R-13 examples ('verified', 'deleted', 'modified', 'accurate as reported') plus inflections and near-synonyms; not reviewed by a practitioner",
+  "source_note": "R-13: an LLM sentence containing any of these terms (case-insensitive, whole-word or whole-phrase match) is rejected. Text inside a located consumer quote is excluded from the check (it is the consumer's verbatim words, already proven to exist in the source). Template sentences are exempt because their outcome slots come from the R-10 Decision.",
+  "entries": [
+    {"term": "verified"}, {"term": "verify"}, {"term": "verifies"}, {"term": "verifying"},
+    {"term": "deleted"}, {"term": "delete"}, {"term": "deletes"}, {"term": "deletion"},
+    {"term": "modified"}, {"term": "modify"}, {"term": "modifies"}, {"term": "modification"},
+    {"term": "accurate as reported"}, {"term": "reported accurately"}, {"term": "reported correctly"},
+    {"term": "corrected"}, {"term": "correction"}, {"term": "will be updated"},
+    {"term": "removed"}, {"term": "remove"},
+    {"term": "upheld"}, {"term": "outcome"}, {"term": "we have determined"}, {"term": "our decision"}
+  ]
+}

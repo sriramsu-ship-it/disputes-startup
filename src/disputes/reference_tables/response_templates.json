@@ -1,0 +1,17 @@
+{
+  "table_id": "response_templates",
+  "table_version": "0.1.0",
+  "verified": false,
+  "source": "NONE - written by the developer (agents module) on 2026-11-07; wording not reviewed by counsel or a dispute practitioner",
+  "source_note": "R-12 template library. Every non-cited sentence of a draft comes from here; slots in {braces} are filled only from the R-10 Decision (outcome, corrections, escalation reasons). The validator (R-13) re-matches each TEMPLATE sentence against its template. Wording is a placeholder; counsel and a practitioner must review it before any real response.",
+  "entries": [
+    {"template_id": "TPL-INTRO", "text": "This narrative summarises our investigation of the consumer's payment history dispute."},
+    {"template_id": "TPL-OUTCOME-VERIFIED_AS_REPORTED", "text": "Result: the disputed payment history is verified as reported."},
+    {"template_id": "TPL-OUTCOME-MODIFY", "text": "Result: the reported payment history will be modified as listed below."},
+    {"template_id": "TPL-CORRECTION", "text": "For {month}, the payment rating changes from {reported} to {corrected}."},
+    {"template_id": "TPL-OUTCOME-DELETE", "text": "Result: the disputed information will be deleted."},
+    {"template_id": "TPL-OUTCOME-ESCALATED", "text": "Result: no response is proposed; the case is referred for supervisor review ({reasons})."},
+    {"template_id": "TPL-OUTCOME-OUT_OF_SCOPE", "text": "Result: this dispute is outside the payment-history scope and is routed for manual handling."},
+    {"template_id": "TPL-REVIEW", "text": "A reviewer must approve this response before it is sent."}
+  ]
+}
