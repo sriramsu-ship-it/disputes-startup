@@ -55,10 +55,8 @@ def test_agreement_current_mapping(cases):
     rows = evaluate(cases, proposed=False)
     assert len(rows) == 196
     bad = [r for r in rows if not (r["reasons_ok"] and r["clock_ok"] and r["susp_ok"])]
-    # Every disagreement is the known contract issue, nothing else.
-    assert {tuple(r["lab"]["other_tags"]) for r in bad} == {("malformed:blank_last_name",)}
-    assert len(bad) == 4
-    assert all(r["clock_ok"] and r["susp_ok"] for r in rows)
+    # C1 + C2 applied in acdv_to_dispute (2026-11-07): the production mapping now agrees fully.
+    assert bad == []
 
 
 def test_agreement_proposed_mapping_is_total(cases):
