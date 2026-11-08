@@ -1,0 +1,25 @@
+{
+  "table_id": "fraud_keywords",
+  "table_version": "0.1.0",
+  "verified": false,
+  "source": "NONE - written by the developer (agents module) on 2026-11-07 from general knowledge of identity-theft dispute language; not validated against real ACDVs or letters",
+  "source_note": "R-06 keyword source for the asymmetric fraud rule. Case-insensitive substring match on normalised text (zero-width removed, whitespace collapsed). Deliberately explicit phrases only: a match can only ADD an ID_FRAUD_SUSPECTED escalation, never remove one, so false positives cost reviewer time, not consumer harm. Paraphrases are left to the LLM signal. Must be replaced by a reviewed list before any non-synthetic run (R-35).",
+  "entries": [
+    {"phrase": "identity theft"},
+    {"phrase": "identity fraud"},
+    {"phrase": "stolen identity"},
+    {"phrase": "identity was stolen"},
+    {"phrase": "not my account"},
+    {"phrase": "not my debt"},
+    {"phrase": "never opened this account"},
+    {"phrase": "never opened it"},
+    {"phrase": "opened in my name"},
+    {"phrase": "opened this in my name"},
+    {"phrase": "opened without my"},
+    {"phrase": "fraudulent account"},
+    {"phrase": "account is fraudulent"},
+    {"phrase": "ftc identity"},
+    {"phrase": "identitytheft.gov"},
+    {"phrase": "police report"}
+  ]
+}
