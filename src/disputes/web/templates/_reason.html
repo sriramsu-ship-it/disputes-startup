@@ -1,0 +1,11 @@
+<fieldset class="reason"><legend>Reason for the change</legend>
+  <label>Reason code
+    <select name="reason_code" required>
+      <option value="">Choose a reason code</option>
+      {% for rc in reason_codes %}<option value="{{ rc }}">{{ rc | replace('_',' ') | lower | capitalize }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Explanation (at least 10 characters)
+    <textarea name="reason_text" rows="2" required minlength="10"></textarea>
+  </label>
+</fieldset>

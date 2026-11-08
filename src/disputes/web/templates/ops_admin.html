@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Config{% endblock %}
+{% block content %}
+<div class="page-head"><div>
+  <h1>Platform config</h1>
+  <p class="sub">Every change is proposed by one admin and applied only when a different admin approves it. Both steps are written to the audit log.</p>
+</div></div>
+{% if notice %}<p class="alert alert-ok" role="status">{{ notice }}</p>{% endif %}
+{% if error %}<p class="alert alert-error" role="alert" data-testid="admin-error">{{ error }}</p>{% endif %}
+
+{% if pending %}
+<section class="panel">
+  <h2>Waiting for approval</h2>
+  <table class="grid" data-testid="pending">
+    <thead><tr><th scope="col">Setting</th><th scope="col">Change</th><th scope="col">Proposed by</th><th scope="col">Reason</th><th scope="col">Decision</th></tr></thead>
+    <tbody>{% for r in pending %}
+    <tr><td><code>{{ r.key }}</code></td><td>{{ r.old_value }} to <strong>{{ r.new_value }}</strong></td><td>{{ r.proposer_name }}</td><td>{{ r.reason }}</td>
+      <td>{% if r.proposed_by == me.user_id %}<span class="muted">Another admin must decide</span>{% else %}
+        <form method="post" action="/ops/admin/requests/{{ r.request_id }}" class="inline">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <input name="note" placeholder="Note (optional)" aria-label="Note">
+          <button class="btn btn-primary" name="decision" value="approve" type="submit">Approve</button>
+          <button class="btn" name="decision" value="reject" type="submit">Reject</button>
+        </form>{% endif %}</td></tr>
+    {% endfor %}</tbody>
+  </table>
+</section>
+{% endif %}
+
+<section class="panel">
+  <h2>Propose a change</h2>
+  <form method="post" action="/ops/admin/propose" class="inline-form">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Setting
+      <select name="key" required>{% for r in rows if not r.locked %}<option value="{{ r.key }}">{{ r.key }}</option>{% endfor %}</select>
+    </label>
+    <label>New value <input name="value" required></label>
+    <label class="grow">Reason (at least 10 characters) <input name="reason" required minlength="10"></label>
+    <button class="btn btn-primary" type="submit">Propose change</button>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>Current values</h2>
+  <table class="grid" data-testid="config">
+    <thead><tr><th scope="col">Setting</th><th scope="col" class="num">Value</th><th scope="col" class="num">PRD default</th><th scope="col">Last changed</th></tr></thead>
+    <tbody>{% for r in rows %}
+      <tr><td><code>{{ r.key }}</code>{% if r.locked %} <span class="chip chip-soft">deploy-time only</span>{% endif %}</td>
+        <td class="num">{{ r.value }}</td><td class="num">{{ r.default }}</td>
+        <td>{% if r.version %}v{{ r.version }} by {{ r.changed_by }}, {{ r.changed_at.strftime('%Y-%m-%d %H:%M') }}{% else %}<span class="muted">default</span>{% endif %}</td></tr>
+    {% endfor %}</tbody>
+  </table>
+</section>
+{% endblock %}

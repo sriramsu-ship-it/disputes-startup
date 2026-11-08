@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ c.case_id }}{% endblock %}
+{% block content %}
+<header class="case-head">
+  <div class="case-title">
+    <p class="crumb"><a href="/client">Overview</a></p>
+    <h1>{{ c.case_id }}</h1>
+    <p class="case-meta"><span class="chip state-{{ c.state }}">{{ label('state', c.state) }}</span>
+      <span>Account {{ c.account }}</span><span>{{ c.cra or '' }}</span>
+      <span>Outcome {{ label('outcome', c.final_outcome) if c.final_outcome else 'pending' }}</span></p>
+  </div>
+  {% if ruler %}
+  <div class="ruler" aria-label="Deadline">
+    <div class="ruler-track clock-{{ c.clock_state or 'NONE' }}">
+      {% if ruler.target_pct is not none %}<span class="ruler-mark target" data-at="{{ ruler.target_pct }}"><span>Our internal target {{ ruler.target }}</span></span>{% endif %}
+      {% if ruler.today_pct is not none and not c.completed %}<span class="ruler-mark today" data-at="{{ ruler.today_pct }}"><span>Today</span></span>{% endif %}
+    </div>
+    <div class="ruler-ends"><span>Received {{ ruler.received }}</span><span>Bureau due date {{ ruler.due }}</span></div>
+  </div>
+  {% endif %}
+</header>
+<section class="panel">
+  <h2>Status timeline</h2>
+  <ol class="timeline" data-testid="client-timeline">
+    {% for t in timeline %}<li><time>{{ t.at.strftime('%Y-%m-%d %H:%M') }} UTC</time> {{ label('state', t.from) }} to <strong>{{ label('state', t.to) }}</strong> <span class="muted">({{ t.actor_role }})</span></li>
+    {% else %}<li class="muted">No status changes recorded yet.</li>{% endfor %}
+  </ol>
+  {% if c.completed %}<p class="exports"><a class="btn" href="/client/cases/{{ c.case_id }}/export.html">View audit record</a> <a class="btn" href="/client/cases/{{ c.case_id }}/export.json">Download audit record (JSON)</a></p>
+  {% else %}<p class="muted">The audit record is available once the dispute is completed.</p>{% endif %}
+</section>
+{% endblock %}

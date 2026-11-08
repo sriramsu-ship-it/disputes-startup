@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Case export {{ ex.case.case_id }} (synthetic)</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="export">
+<div class="synthetic-banner" role="note">Synthetic data. No real consumers, accounts or bureaus. Nothing leaves this system.</div>
+<main class="export-doc">
+<header class="export-head">
+  <h1>Case record {{ ex.case.case_id }}</h1>
+  <p>Generated {{ ex.generated_at }} in {{ ex.generation_seconds }} s. Export schema {{ ex.export_schema_version }}.{% if ex.masked %} Personal data is masked to the last 4 characters; hashes refer to the unmasked originals.{% endif %}</p>
+  <p class="chain chain-{{ 'ok' if ex.hash_chain.ok else ('bad' if ex.hash_chain.ok is sameas false else 'na') }}" data-testid="chain-status">
+    Audit hash chain: <strong>{{ ex.hash_chain.status }}</strong>{% if ex.hash_chain.events is defined %}, {{ ex.hash_chain.events }} events{% endif %}{% if ex.hash_chain.first_broken_event_id %}, first broken event {{ ex.hash_chain.first_broken_event_id }}{% endif %}{% if ex.hash_chain.detail %} ({{ ex.hash_chain.detail }}){% endif %}.</p>
+  <p class="hash">Content sha256 {{ ex.content_sha256 }}</p>
+</header>
+
+<section><h2>Case</h2>
+<dl class="kv two-col">{% for k, v in ex.case.items() %}<dt>{{ k }}</dt><dd>{{ v if v is not none else '—' }}</dd>{% endfor %}</dl></section>
+
+<section><h2>Dispute as received</h2><pre class="json">{{ ex.dispute_as_received | tojson_pretty }}</pre></section>
+
+<section><h2>Deadline</h2>
+<dl class="kv two-col"><dt>Received</dt><dd>{{ ex.deadline.date_received }}</dd><dt>Internal target</dt><dd>{{ ex.deadline.internal_target_date }}</dd>
+<dt>Response due</dt><dd>{{ ex.deadline.response_due_date }}</dd><dt>Clock state</dt><dd>{{ ex.deadline.clock_state }}</dd></dl></section>
+
+<section><h2>Timeline</h2>
+<table class="grid compact"><thead><tr><th scope="col">Event</th><th scope="col">When (UTC)</th><th scope="col">Type</th><th scope="col">Actor</th><th scope="col">Payload hash</th></tr></thead>
+<tbody>{% for e in ex.timeline %}<tr><td class="num">{{ e.event_id }}</td><td>{{ e.occurred_at }}</td><td>{{ e.event_type }}</td><td>{{ e.actor_type }} {{ e.actor_id }}{% if e.actor_role %} ({{ e.actor_role }}){% endif %}</td><td class="hash">{{ e.payload_sha256[:16] }}…</td></tr>{% endfor %}</tbody></table></section>
+
+<section><h2>Evidence</h2>
+{% for e in ex.evidence %}<h3>{{ e.evidence_id }} <span class="muted">{{ e.kind }}, {{ e.source }}, {{ e.retrieved_at }}</span></h3><p class="hash">sha256 {{ e.sha256 }}</p><pre class="json">{{ e.content | tojson_pretty }}</pre>{% else %}<p class="muted">None.</p>{% endfor %}</section>
+
+<section><h2>Attachments</h2>
+{% for a in ex.attachments %}<h3>{{ a.attachment_id }}: {{ a.file_name }} <span class="muted">{{ a.media_type }}, {{ a.page_count }} page(s)</span></h3><p class="hash">sha256 {{ a.sha256 }}</p><pre class="doc">{{ a.extracted_text }}</pre>{% else %}<p class="muted">None.</p>{% endfor %}</section>
+
+<section><h2>Month by month</h2>
+<table class="grid compact"><thead><tr><th scope="col">Month</th><th scope="col">DPD</th><th scope="col">Expected</th><th scope="col">Reported</th><th scope="col">Result</th><th scope="col">Evidence</th></tr></thead>
+<tbody>{% for m in ex.comparison %}<tr><td>{{ m.month }}</td><td class="num">{{ m.dpd }}</td><td>{{ m.expected_rating }}</td><td>{{ m.reported_rating }}</td><td>{{ m.result }}</td><td>{{ m.evidence_ids | join(', ') }}</td></tr>{% else %}<tr><td colspan="6" class="muted">None.</td></tr>{% endfor %}</tbody></table></section>
+
+<section><h2>Claims, quotes and findings</h2>
+<table class="grid compact"><thead><tr><th scope="col">Claim</th><th scope="col">Quote and span</th><th scope="col">Finding</th><th scope="col">Evidence or reason</th></tr></thead>
+<tbody>{% for c in ex.claims %}<tr><td>{{ c.claim_id }}: {{ c.text }}</td><td>“{{ c.quote }}” {{ c.source_id }} {{ c.span }}</td><td>{{ c.finding or 'none' }} ({{ c.finding_source or 'invalid' }})</td><td>{{ c.evidence_ids | join(', ') }} {{ c.reason }}</td></tr>{% else %}<tr><td colspan="4" class="muted">None.</td></tr>{% endfor %}</tbody></table></section>
+
+<section><h2>Decision</h2><pre class="json">{{ ex.decision | tojson_pretty }}</pre></section>
+
+<section><h2>Draft versions</h2>
+{% for d in ex.drafts %}<h3>Version {{ d.version }} by {{ d.created_by }}, {{ d.created_at }} <span class="muted">valid={{ d.valid }}, attempts={{ d.attempts }}</span></h3>
+<ol>{% for s in d.sentences %}<li>[{{ s.source }}{% if s.template_id %} {{ s.template_id }}{% endif %}{% if s.evidence_ids %}; {{ s.evidence_ids | join(', ') }}{% endif %}] {{ s.text }}</li>{% endfor %}</ol>
+{% if d.validator_errors %}<p>Validator errors: {{ d.validator_errors | join('; ') }}</p>{% endif %}{% else %}<p class="muted">None.</p>{% endfor %}</section>
+
+<section><h2>Reviewer decisions</h2>
+<ol>{% for r in ex.reviews %}<li>{{ r.created_at }}: <strong>{{ r.action }}</strong> by {{ r.actor_name }} ({{ r.actor_id }}, {{ r.actor_role }}), {{ r.from_state }} to {{ r.to_state }}{% if r.reason_code %}, reason {{ r.reason_code }}{% endif %}{% if r.reason_text %}: {{ r.reason_text }}{% endif %}</li>{% else %}<li class="muted">None.</li>{% endfor %}</ol></section>
+
+<section><h2>Response packages</h2>
+{% for p in ex.packages %}<h3>Package version {{ p.package_version }}, {{ p.created_at }}</h3><p class="hash">sha256 {{ p.sha256 }}</p><pre class="json">{{ p | tojson_pretty }}</pre>{% else %}<p class="muted">None.</p>{% endfor %}</section>
+
+<section><h2>Versions</h2><pre class="json">{{ ex.versions | tojson_pretty }}</pre>
+<h3>Reference tables</h3>
+<table class="grid compact"><thead><tr><th scope="col">Table</th><th scope="col">Version</th><th scope="col">Verified</th></tr></thead>
+<tbody>{% for k, v in ex.reference_tables | dictsort %}<tr><td>{{ k }}</td><td>{{ v.version if v is mapping else v }}</td><td>{{ v.verified if v is mapping else '' }}</td></tr>{% endfor %}</tbody></table></section>
+</main>
+</body>
+</html>
