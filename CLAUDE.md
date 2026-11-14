@@ -63,7 +63,7 @@ src/                       code
 ```
 
 ## Current priorities (update as they change)
-1. **Phase 1 (now, no interviews, desk research only):** prove the core loop (intake, classify, investigate, cited draft, human review, audit record) on synthetic data with a measured eval baseline, per PRD v1.1 (`docs/product/prd-mvp-v0.md`). **Stages 0-3 are approved (Stages 1-3 on 2026-11-07)**; Stage 4 (eval harness and gates) needs Sriram's written approval. The managed-service pivot means the PRD moves to v1.2 (PM).
+1. **Phase 1 (now, no interviews, desk research only):** prove the core loop (intake, classify, investigate, cited draft, human review, audit record) on synthetic data with a measured eval baseline, per PRD v1.1 (`docs/product/prd-mvp-v0.md`). **Stages 0-4 are approved (Stages 1-3 on 2026-11-07, Stage 4 on 2026-11-14).** Current goal ("Level 1", 2026-11-14): a hosted demo on AWS, synthetic data only, that prospects can log into and test; the LLM stays the offline stand-in until ZDR is confirmed (ADR-006). The managed-service pivot means the PRD moves to v1.2 (PM).
 2. Meet the Phase 1 exit gate (PRD §12). It is a technical go/no-go only and is not evidence for pricing, a pilot or hiring.
 3. **Phase 2 (deferred):** validate the wedge, budget owner and willingness to pay (U1, U4, U5, U17), e-OSCAR sponsorship (U2) and LLM-hosting tolerance (U7) via `docs/product/discovery-plan.md`; practitioner checks (U20, U29, U31).
 4. Before any real data, pilot or compliance claim: FCRA counsel engaged, and the regulatory defensibility of AI-assisted investigations reviewed (U3, U10).

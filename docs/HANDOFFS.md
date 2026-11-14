@@ -197,3 +197,9 @@ Format:
 - Need back (Sriram): decisions D1-D10 in `docs/product/managed-service-model.md` §12 (ICP, start buyer discovery now, pivot kill criteria, pricing structure to test, client pre-approval of DELETE, analyst model, counsel scope, SOC 2 path); confirm ZDR for the Anthropic key (ADR-006) to enable a real-model run; approve Stage 4 (eval harness + frozen T1/T3) when ready.
 - Need back (PM): answers to the PRD questions in STATUS.md "Known issues" item 6; add SYSTEM_ERROR to the §6 reason list; renumber the eval-methodology ADR reference (ADR-011 is now platform modules).
 - Status: OPEN
+
+## 2026-11-14 | Sriram (founder, in chat) -> developer, product-manager | Level 1: hosted synthetic demo for prospects; Stage 4 approved
+- Produced: decisions in `docs/DECISIONS.md` (2026-11-14 rows); contract additions in `src/disputes/domain.py` (`ReviewRecord`, `ReviewAction.REOPEN_AFTER_SUBMISSION`, `Draft.human_authored`, `Classification.llm_suspicious`) and `config.Settings` (`cookie_secure`, `environment`).
+- **Approval:** Sriram approves **Stage 4** (written, in chat, 2026-11-14). Model stays the offline stand-in; hosting target is AWS.
+- Need back (parallel developer agents, one PR each): `deploy` (container, AWS IaC, runbook), `hardening` (login rate limit, TOTP enrolment, revocable sessions, clock refresh, portal fixes, shared config loader), `demo` (prospect sandbox + guided cases + try-your-own-letter), `package` (realistic response package output), `evals` (Stage 4 harness, frozen T1, T3 labelling tool). product-manager: demo acceptance criteria, prospect demo script, answers to open PRD questions.
+- Status: OPEN
