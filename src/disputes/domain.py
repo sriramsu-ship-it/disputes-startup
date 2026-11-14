@@ -122,6 +122,7 @@ class ReviewAction(StrEnum):
     MARK_OUT_OF_SCOPE = "MARK_OUT_OF_SCOPE"
     SECOND_APPROVE = "SECOND_APPROVE"
     REJECT_SECOND_APPROVAL = "REJECT_SECOND_APPROVAL"
+    REOPEN_AFTER_SUBMISSION = "REOPEN_AFTER_SUBMISSION"
 
 
 class SentenceSource(StrEnum):
@@ -220,6 +221,7 @@ class Classification:
     llm_confidence: float | None           # logged, never gates
     route: Route
     escalations: tuple[EscalationReason, ...] = ()
+    llm_suspicious: bool = False           # model flagged suspicious content (R-14); also on the budget
 
 
 @dataclass(frozen=True)
@@ -295,6 +297,7 @@ class Draft:
     attempts: int = 1
     valid: bool = True
     template_library_version: str = ""
+    human_authored: bool = False           # reviewer-written narrative (all sentences source=HUMAN)
 
 
 @dataclass(frozen=True)
@@ -311,6 +314,21 @@ class LlmCallRecord:
     tokens_out: int
     cost_usd: float
     attempt: int
+
+
+@dataclass(frozen=True)
+class ReviewRecord:
+    """The `review` artifact written by every reviewer action (R-17, R-19, R-20)."""
+    action: str                      # ReviewAction value
+    actor_id: str
+    actor_role: Role
+    actor_name: str
+    from_state: CaseState
+    to_state: CaseState
+    reason_code: str | None = None   # PRD Appendix C
+    reason_text: str | None = None
+    working: dict | None = None      # {outcome, corrections, claim_findings, narrative}
+    extra: dict = field(default_factory=dict)   # stage, first_approver, changed, ...
 
 
 # --------------------------------------------------------------------------- helpers

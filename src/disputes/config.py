@@ -66,6 +66,11 @@ class Settings:
         "DISPUTES_LLM_BACKEND", "offline"))   # "offline" (deterministic, no network) | "anthropic"
     anchor_dir: str = field(default_factory=lambda: os.environ.get(
         "DISPUTES_ANCHOR_DIR", "/tmp/disputes-anchors"))
+    # Secure cookies: on by default outside local dev. Hosted deployments must set this to 1.
+    cookie_secure: bool = field(default_factory=lambda: os.environ.get(
+        "DISPUTES_COOKIE_SECURE", "0") == "1")
+    # "dev" | "demo" (hosted, synthetic data only) — demo refuses the default session secret.
+    environment: str = field(default_factory=lambda: os.environ.get("DISPUTES_ENV", "dev"))
 
 
 def settings() -> Settings:
