@@ -1,0 +1,11 @@
+# Allow-list: only what the image needs.
+*
+!src/requirements.txt
+!src/disputes
+!src/disputes_core
+!src/prompts
+!src/data/fixtures
+!deploy/bootstrap.py
+**/__pycache__
+**/*.pyc
+**/.pytest_cache

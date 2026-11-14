@@ -5,8 +5,12 @@
     ingest --tenant T --fixtures DIR [--fixture-dates]
                                  enqueue one process_dispute job per line of DIR/acdvs.jsonl; the
                                  tenant's system of record is DIR/sor_accounts.jsonl
-    work [--no-wait] [--max-jobs N]
-                                 run the worker until the queue is empty
+    work [--no-wait] [--max-jobs N] [--loop [--poll-interval S]]
+                                 run the worker until the queue is empty; with --loop, keep polling
+                                 every S seconds (default 5) until SIGTERM/SIGINT (container worker)
+    serve [--host H] [--port P]  run the web app under uvicorn with proxy headers trusted only from
+                                 DISPUTES_FORWARDED_ALLOW_IPS (default 127.0.0.1; set the VPC CIDR
+                                 behind an ALB)
     verify [--anchor-dir D] [--case CASE --tenant T]
                                  recompute the audit chains (exit 1 if broken)
     anchor [--anchor-dir D]      write a write-once anchor of the global head
@@ -15,7 +19,8 @@
                                  create NAME and pg_restore FILE into it
 
 Settings come from `disputes.config.settings()` (DISPUTES_DATABASE_URL, DISPUTES_ANCHOR_DIR, ...);
-`--database-url` overrides. Everything is SYNTHETIC.
+`--database-url` overrides. Everything is SYNTHETIC. Every command first runs
+`disputes.hosting.enforce_hosted_safety()` (refuses unsafe DISPUTES_ENV=demo settings; exit 2).
 """
 from __future__ import annotations
 
@@ -186,9 +191,68 @@ def cmd_work(url: str, args) -> int:
         check_tables(cfg)
     except NotImplementedError:
         print("WARNING: rules.gate.check_tables not implemented yet; R-35 gate skipped", file=sys.stderr)
+    if args.loop:
+        return work_loop(url, cfg=cfg, poll_interval_s=args.poll_interval)
     with connect(url) as c:
         stats = run_worker(c, cfg=cfg, max_jobs=args.max_jobs, wait_for_backoff=not args.no_wait)
     print(json.dumps(stats))
+    return 0
+
+
+def work_loop(url: str, *, cfg, poll_interval_s: float = 5.0, stop=None, max_idle_polls: int | None = None,
+              reconnect_max_s: float = 60.0) -> int:
+    """Long-running worker (deploy): drain the queue, sleep `poll_interval_s` when it is empty, repeat.
+    Stops cleanly on SIGTERM/SIGINT (ECS sends SIGTERM) between jobs. A lost database connection is
+    retried with capped backoff instead of crashing. `stop` (threading.Event) and `max_idle_polls`
+    exist for tests."""
+    import logging
+    import signal
+    import threading
+    from disputes.db.core import connect
+    from disputes.workflow.worker import run_worker
+    log = logging.getLogger("disputes.worker")
+    stop = stop or threading.Event()
+    if threading.current_thread() is threading.main_thread():
+        for sig in (signal.SIGTERM, signal.SIGINT):
+            signal.signal(sig, lambda *_: stop.set())
+    idle, backoff = 0, 1.0
+    print(json.dumps({"worker": "started", "poll_interval_s": poll_interval_s}), flush=True)
+    while not stop.is_set():
+        try:
+            with connect(url) as c:
+                backoff = 1.0
+                while not stop.is_set():
+                    stats = run_worker(c, cfg=cfg, max_jobs=50, wait_for_backoff=False)
+                    worked = sum(stats[k] for k in ("done", "retry", "dead", "lost", "reaped"))
+                    if worked:
+                        idle = 0
+                        print(json.dumps({k: stats[k] for k in ("done", "retry", "dead", "lost", "reaped")}),
+                              flush=True)
+                        continue
+                    idle += 1
+                    if max_idle_polls is not None and idle >= max_idle_polls:
+                        stop.set()
+                        break
+                    stop.wait(poll_interval_s)
+        except psycopg.OperationalError as e:
+            log.warning("worker: database unavailable (%s); retrying in %.0fs", type(e).__name__, backoff)
+            stop.wait(backoff)
+            backoff = min(backoff * 2, reconnect_max_s)
+    print(json.dumps({"worker": "stopped"}), flush=True)
+    return 0
+
+
+def cmd_serve(url: str, args) -> int:
+    import logging
+    import uvicorn
+    from disputes.web.app import create_app
+    from disputes.web.pii import install_log_masking
+    logging.basicConfig(level=logging.INFO)
+    install_log_masking()
+    uvicorn.run(create_app(database_url=url), host=args.host, port=args.port, log_config=None,
+                proxy_headers=True,
+                forwarded_allow_ips=os.environ.get("DISPUTES_FORWARDED_ALLOW_IPS", "127.0.0.1"),
+                server_header=False, timeout_graceful_shutdown=20)
     return 0
 
 
@@ -255,6 +319,11 @@ def main(argv: list[str] | None = None) -> int:
     s = sub.add_parser("work")
     s.add_argument("--max-jobs", type=int, default=None)
     s.add_argument("--no-wait", action="store_true", help="do not wait for jobs in backoff")
+    s.add_argument("--loop", action="store_true", help="keep running and poll for new jobs (container worker)")
+    s.add_argument("--poll-interval", type=float, default=5.0, help="seconds between polls when idle (--loop)")
+    s = sub.add_parser("serve")
+    s.add_argument("--host", default="127.0.0.1")
+    s.add_argument("--port", type=int, default=8000)
     s = sub.add_parser("verify")
     s.add_argument("--anchor-dir", default=None)
     s.add_argument("--case", default=None)
@@ -267,9 +336,16 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--file", required=True)
     s.add_argument("--target-db", required=True)
     args = p.parse_args(argv)
+    from disputes.hosting import UnsafeHostedConfig, enforce_hosted_safety
+    try:
+        enforce_hosted_safety()
+    except UnsafeHostedConfig as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        return 2
     url = args.database_url or settings().database_url
     handlers = {"migrate": cmd_migrate, "seed-demo": cmd_seed_demo, "ingest": cmd_ingest, "work": cmd_work,
-                "verify": cmd_verify, "anchor": cmd_anchor, "backup": cmd_backup, "restore": cmd_restore}
+                "verify": cmd_verify, "anchor": cmd_anchor, "backup": cmd_backup, "restore": cmd_restore,
+                "serve": cmd_serve}
     return handlers[args.cmd](url, args)
 
 

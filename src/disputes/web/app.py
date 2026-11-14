@@ -78,6 +78,8 @@ def create_app(*, database_url: str | None = None, session_secret: str | None = 
 
     app = FastAPI(title="Disputes platform (SYNTHETIC)", docs_url=None, redoc_url=None, openapi_url=None)
     app.state.sink = sink
+    app.state.database_url = db_url
+    from disputes.web.health import router as health_router; app.include_router(health_router)  # noqa: E702 (deploy)
     app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
     templates = Jinja2Templates(directory=HERE / "templates")
     templates.env.globals.update(label=views.label, mask_account=mask_account,

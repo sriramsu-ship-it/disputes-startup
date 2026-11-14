@@ -1,0 +1,76 @@
+# Local demo stack (SYNTHETIC DATA ONLY). One command:   docker compose up -d --build
+# Then open http://localhost:8000   (runbook: docs/engineering/runbook-local-demo.md)
+#
+# Services: postgres (data in the named volume `pgdata`) -> bootstrap (one-shot: migrate, demo users,
+# synthetic disputes; idempotent) -> web + worker (same image).
+#
+# This is LOCAL DEV mode (DISPUTES_ENV=dev): plain HTTP on localhost, the MFA page shows the current
+# code, a fixed local password. The ports are bound to 127.0.0.1 only, so nobody else on your network
+# can reach it. Never expose this configuration to the internet; hosted mode is DISPUTES_ENV=demo.
+#
+# Override any ${VAR} below in a `.env` file next to this file or in your shell, e.g. DISPUTES_PORT=8001.
+
+name: disputes-demo
+
+x-app-env: &app-env
+  DISPUTES_ENV: dev
+  DISPUTES_DATABASE_URL: postgresql://disputes:${DISPUTES_DB_PASSWORD:-local-dev-only}@postgres:5432/disputes
+  DISPUTES_LLM_BACKEND: offline
+  DISPUTES_DEV_SHOW_TOTP: "1"
+  DISPUTES_COOKIE_SECURE: "0"
+  DISPUTES_SESSION_SECRET: ${DISPUTES_SESSION_SECRET:-local-dev-only-session-secret-not-for-hosting}
+  DISPUTES_DEMO_PASSWORD: ${DISPUTES_DEMO_PASSWORD:-synthetic-demo-local}
+
+services:
+  postgres:
+    image: ${DISPUTES_POSTGRES_IMAGE:-postgres:16-trixie}
+    environment:
+      POSTGRES_USER: disputes
+      POSTGRES_PASSWORD: ${DISPUTES_DB_PASSWORD:-local-dev-only}
+      POSTGRES_DB: disputes
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U disputes -d disputes"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    # No published port: only the app containers can reach the database.
+    restart: unless-stopped
+
+  bootstrap:
+    image: disputes-platform:local
+    build: .
+    command: ["python", "/app/deploy/bootstrap.py"]
+    environment: *app-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  web:
+    image: disputes-platform:local
+    command: ["python", "-m", "disputes.cli", "serve", "--host", "0.0.0.0", "--port", "8000"]
+    environment: *app-env
+    ports:
+      - "127.0.0.1:${DISPUTES_PORT:-8000}:8000"
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  worker:
+    image: disputes-platform:local
+    command: ["python", "-m", "disputes.cli", "work", "--loop", "--poll-interval", "2"]
+    environment: *app-env
+    # The worker serves no HTTP; disable the image's web health check for it.
+    healthcheck:
+      disable: true
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  pgdata:
