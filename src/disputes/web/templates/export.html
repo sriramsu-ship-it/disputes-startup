@@ -1,65 +1,154 @@
+{# R-22 audit export. OWNER: package agent. Context: ex (web.export.build_export); optional standalone/css
+   (PDF and zip copies inline the stylesheet and drop the toolbar). Renders under the web app's Jinja
+   environment as well as the package renderer, so it uses built-in features plus tojson_pretty only. #}
+{% from "_package_macros.html" import head_assets, demo_band, outcome_label, finding_label, dash, sentence_sources, month_table %}
+{% set s = ex.summary %}
+{% set c = ex.case %}
+{% set base = ('/client/cases/' ~ c.case_id) if ex.audience == 'client' else ('/ops/t/' ~ c.tenant_id ~ '/cases/' ~ c.case_id) %}
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<title>Case export {{ ex.case.case_id }} (synthetic)</title>
-<link rel="stylesheet" href="/static/app.css">
-</head>
-<body class="export">
-<div class="synthetic-banner" role="note">Synthetic data. No real consumers, accounts or bureaus. Nothing leaves this system.</div>
-<main class="export-doc">
-<header class="export-head">
-  <h1>Case record {{ ex.case.case_id }}</h1>
-  <p>Generated {{ ex.generated_at }} in {{ ex.generation_seconds }} s. Export schema {{ ex.export_schema_version }}.{% if ex.masked %} Personal data is masked to the last 4 characters; hashes refer to the unmasked originals.{% endif %}</p>
-  <p class="chain chain-{{ 'ok' if ex.hash_chain.ok else ('bad' if ex.hash_chain.ok is sameas false else 'na') }}" data-testid="chain-status">
-    Audit hash chain: <strong>{{ ex.hash_chain.status }}</strong>{% if ex.hash_chain.events is defined %}, {{ ex.hash_chain.events }} events{% endif %}{% if ex.hash_chain.first_broken_event_id %}, first broken event {{ ex.hash_chain.first_broken_event_id }}{% endif %}{% if ex.hash_chain.detail %} ({{ ex.hash_chain.detail }}){% endif %}.</p>
-  <p class="hash">Content sha256 {{ ex.content_sha256 }}</p>
-</header>
+<head>{{ head_assets(standalone, css, "Case record " ~ c.case_id ~ " (synthetic)") }}</head>
+<body class="doc export">
+<main class="sheet" data-testid="export-doc">
+{% if not standalone %}<nav class="toolbar" aria-label="Downloads">
+  <a href="{{ base }}/audit-export.pdf">Download PDF</a><a href="{{ base }}/audit-export.zip">Download bundle (zip)</a><a href="{{ base }}/export.json">Download JSON</a>
+</nav>{% endif %}
+{{ demo_band("CASE RECORD") }}
 
+<header class="doc-head">
+  <div>
+    <p class="kicker">Dispute investigation record{% if ex.audience == 'client' %} &middot; client copy{% endif %} &middot; Synthetic data</p>
+    <h1>Case record {{ c.case_id }}</h1>
+    <p class="ids">{{ c.channel }} &middot; control number <span class="mono">{{ c.control_number }}</span> &middot; bureau <span class="mono">{{ c.cra }}</span> &middot; account <span class="mono">{{ s.disputed.account_masked }}</span></p>
+  </div>
+  <div class="result"><span class="label">Final outcome</span><span class="value o-{{ c.final_outcome }}">{{ outcome_label(c.final_outcome) if c.final_outcome else 'Not final' }}</span>
+    <div class="small muted">Case state {{ c.state }}</div></div>
+</header>
+<p class="small muted">Generated {{ ex.generated_at[:19] | replace('T', ' ') }} UTC in {{ ex.generation_seconds }} s &middot; export schema {{ ex.export_schema_version }}{% if ex.masked %} &middot; personal data masked; hashes refer to the unmasked originals{% endif %}</p>
+<p class="small"><span class="chain {{ 'pill ok' if ex.hash_chain.ok else ('pill bad' if ex.hash_chain.ok is sameas false else 'pill') }}" data-testid="chain-status">Audit hash chain: <strong>{{ ex.hash_chain.status }}</strong>{% if ex.hash_chain.events is defined %}, {{ ex.hash_chain.events }} events{% endif %}{% if ex.hash_chain.first_broken_event_id %}, first broken event {{ ex.hash_chain.first_broken_event_id }}{% endif %}</span>
+  <span class="hash">content sha256 {{ ex.content_sha256 }}</span></p>
+
+<section aria-labelledby="sum-h">
+<h2 id="sum-h">Case summary</h2>
+<dl class="qa" data-testid="summary">
+  <dt>What was disputed</dt>
+  <dd><p>{{ c.channel }} dispute from bureau <span class="mono">{{ s.disputed.cra }}</span> on account <span class="mono">{{ s.disputed.account_masked }}</span>, received {{ dash(s.when.received) }}.
+      Dispute codes <span class="mono">{{ s.disputed.dispute_codes | join(', ') or '—' }}</span> (placeholder codes); disputed months {{ s.disputed.disputed_months | join(', ') or '—' }}; category {{ s.disputed.categories | join(', ') or '—' }}.</p>
+      {% if s.disputed.consumer_statement %}<p>Bureau summary of the consumer's statement: &ldquo;{{ s.disputed.consumer_statement }}&rdquo;</p>{% endif %}
+      <p class="small muted">{{ s.disputed.claims }} claim(s) extracted from {{ s.disputed.attachments }} attachment(s); see Claims below.</p></dd>
+
+  <dt>What we looked at</dt>
+  <dd><table class="t compact" id="g5-evidence"><thead><tr><th scope="col">Evidence ID</th><th scope="col">Kind</th><th scope="col">Source</th><th scope="col">sha256</th></tr></thead>
+      <tbody>{% for e in s.looked_at %}<tr><td class="mono">{{ e.evidence_id }}</td><td>{{ e.kind }}</td><td class="small">{{ e.source }}</td><td class="hash">{{ (e.sha256 or '')[:16] }}…</td></tr>{% else %}<tr><td colspan="4" class="muted">No evidence was retrieved.</td></tr>{% endfor %}</tbody></table></dd>
+
+  <dt>What we decided</dt>
+  <dd><p>Final outcome: <strong>{{ s.decided.final_label }}</strong> <span class="mono" id="g5-final-outcome">{{ s.decided.final_outcome or 'NONE' }}</span>.
+      System proposal: {{ s.decided.proposed_label }} <span class="mono" id="g5-proposed-outcome">{{ s.decided.proposed_outcome or 'NONE' }}</span>{% if s.decided.departs_from_proposal %} <span class="pill human">reviewer departed from the proposal</span>{% endif %}.</p>
+      {% if s.decided.corrections %}<p>Corrections returned: {% for k in s.decided.corrections %}{{ k.month }} payment rating <span class="mono">{{ dash(k.reported) }}</span> &rarr; <span class="mono">{{ k.corrected }}</span>{% if not loop.last %}; {% endif %}{% endfor %} (placeholder values).</p>{% endif %}
+      {% if s.decided.escalation_reasons %}<p>Escalation reasons: <span class="mono">{{ s.decided.escalation_reasons | join(', ') }}</span></p>{% endif %}</dd>
+
+  <dt>Why</dt>
+  <dd><table class="t compact" id="g5-rules"><thead><tr><th scope="col">Rule ID</th><th scope="col">Version</th><th scope="col">Result</th><th scope="col">Evidence</th></tr></thead>
+      <tbody>{% for f in s.why.rule_firings %}<tr><td class="mono">{{ f.rule_id }}</td><td class="mono">{{ f.rule_version }}</td><td>{{ f.result }}<div class="small muted">{{ f.detail }}</div></td><td class="mono small">{{ f.evidence_ids | join(', ') }}</td></tr>{% else %}<tr><td colspan="4" class="muted">No rule firings recorded.{% if s.decided.escalation_reasons %} The case was escalated before the outcome rules ran (reasons: {{ s.decided.escalation_reasons | join(', ') }}); this step records no rule ID or version.{% endif %}</td></tr>{% endfor %}</tbody></table>
+      {% for w in s.who if w.action in ('EDIT', 'MARK_OUT_OF_SCOPE', 'REOPEN_AFTER_SUBMISSION', 'ESCALATE') and (w.reason_code or w.reason_text) %}{% if loop.first %}<p class="small">Reviewer reasons:</p><ul class="small">{% endif %}<li>{{ w.action | replace('_', ' ') | lower }}{% if w.reason_code %} <span class="mono">{{ w.reason_code }}</span>{% endif %}: {{ w.reason_text }}</li>{% if loop.last %}</ul>{% endif %}{% endfor %}
+      <table class="t compact" id="g5-claims"><thead><tr><th scope="col">Claim</th><th scope="col">Finding</th><th scope="col">By</th><th scope="col">Evidence or reason</th></tr></thead>
+      <tbody>{% for k in s.why.claims %}<tr><td><span class="mono">{{ k.claim_id }}</span> {{ k.text }}{% if k.quote %}<div class="small muted">&ldquo;{{ k.quote }}&rdquo; ({{ k.source_id }})</div>{% endif %}</td><td>{{ k.finding_label }} <span class="mono">{{ k.finding or 'NONE' }}</span></td><td>{% if k.finding_source == 'HUMAN' %}<span class="pill human">reviewer</span>{% elif k.finding_source %}system{% else %}<span class="pill bad">none</span>{% endif %}</td><td class="small"><span class="mono">{{ k.evidence_ids | join(', ') }}</span> {{ k.reason }}</td></tr>{% else %}<tr><td colspan="4" class="muted">No claims.</td></tr>{% endfor %}</tbody></table></dd>
+
+  <dt>Who decided</dt>
+  <dd>{% for w in s.who %}<p><strong>{{ w.action | replace('_', ' ') | lower | capitalize }}</strong> by {% if ex.audience == 'client' %}staff <span class="mono small">{{ w.actor_id }}</span>{% else %}{{ w.actor_name }} <span class="mono small">{{ w.actor_id }}</span>{% endif %} ({{ w.actor_role }}), {{ (w.at or '')[:16] | replace('T', ' ') }} UTC{% if w.reason_code %} &middot; reason <span class="mono">{{ w.reason_code }}</span>{% endif %}{% if w.reason_text %}: {{ w.reason_text }}{% endif %}</p>{% else %}<p class="muted">No reviewer has acted on this case.</p>{% endfor %}
+      {% if s.authorized_name %}<p class="small">Authorized name on the response (<span class="mono">dfAuthorizedName</span>): {{ s.authorized_name }}</p>{% endif %}</dd>
+
+  <dt>When</dt>
+  <dd><p>Received {{ dash(s.when.received) }} &middot; internal target {{ dash(s.when.internal_target) }} &middot; response due {{ dash(s.when.due) }} &middot; decided {{ (s.when.decided_at or '—')[:16] | replace('T', ' ') }}{% if s.when.decided_at %} UTC{% endif %}
+      {% if s.when.calendar_days_before_due is not none %}<span class="pill {{ 'ok' if s.when.on_time else 'bad' }}">{% if s.when.on_time %}{{ s.when.calendar_days_before_due }} calendar days before due{% else %}{{ -s.when.calendar_days_before_due }} days late{% endif %}</span>{% endif %}
+      &middot; clock state {{ dash(s.when.clock_state) }}</p></dd>
+
+  <dt>Can I trust this record</dt>
+  <dd>{% if s.trust.events == 0 %}<p class="check-bad">No audit events are recorded for this case, so there is no chain to verify. Treat this record as unsupported.</p>
+      {% else %}<p class="{{ 'check-ok' if s.trust.hash_chain_ok else 'check-bad' }}">Audit hash chain {{ s.trust.hash_chain }}{% if s.trust.events is not none %} ({{ s.trust.events }} events, recomputed when this export was generated){% endif %}.</p>{% endif %}
+      {% if s.trust.anchor %}<p class="{{ 'check-ok' if s.trust.anchor.covers_case else ('check-bad' if s.trust.anchor.at else '') }}">{% if s.trust.anchor.at %}Last external anchor of the whole log: {{ s.trust.anchor.at[:19] | replace('T', ' ') }} UTC (head event {{ s.trust.anchor.global_head_event_id }}); {{ 'covers' if s.trust.anchor.covers_case else 'does not yet cover' }} this case's latest event.{% else %}No external anchor found ({{ s.trust.anchor.detail }}).{% endif %}</p>{% endif %}
+      {% for p in s.trust.packages %}<p class="{{ 'check-ok' if p.ok else 'check-bad' }}">Response package v{{ p.version }}: stored hash, content hash and sink receipt recomputed and {{ 'match' if p.ok else 'DO NOT match' }} audit event {{ dash(p.event_id) }}.</p>{% endfor %}
+      {% if s.trust.unverified_tables %}<p class="check-bad">{{ s.trust.unverified_tables | length }} reference tables are unverified placeholders: <span class="mono small">{{ s.trust.unverified_tables | join(', ') }}</span>.</p>{% endif %}
+      <p class="small muted">Model: {{ s.trust.model_ids | join(', ') or 'none recorded' }}. {% if s.trust.synthetic %}Synthetic data only.{% endif %} Placeholder response schema (not validated against e-OSCAR or Metro 2).</p></dd>
+</dl>
+</section>
+
+<div class="page-break"></div>
 <section><h2>Case</h2>
-<dl class="kv two-col">{% for k, v in ex.case.items() %}<dt>{{ k }}</dt><dd>{{ v if v is not none else '—' }}</dd>{% endfor %}</dl></section>
+<dl class="kv">{% for k, v in c.items() %}<dt>{{ k }}</dt><dd class="{{ 'hash' if 'sha256' in k else '' }}">{{ v if v is not none else '—' }}</dd>{% endfor %}</dl></section>
 
 <section><h2>Dispute as received</h2><pre class="json">{{ ex.dispute_as_received | tojson_pretty }}</pre></section>
 
 <section><h2>Deadline</h2>
-<dl class="kv two-col"><dt>Received</dt><dd>{{ ex.deadline.date_received }}</dd><dt>Internal target</dt><dd>{{ ex.deadline.internal_target_date }}</dd>
+<dl class="kv"><dt>Received</dt><dd>{{ ex.deadline.date_received }}</dd><dt>Internal target</dt><dd>{{ ex.deadline.internal_target_date }}</dd>
 <dt>Response due</dt><dd>{{ ex.deadline.response_due_date }}</dd><dt>Clock state</dt><dd>{{ ex.deadline.clock_state }}</dd></dl></section>
 
 <section><h2>Timeline</h2>
-<table class="grid compact"><thead><tr><th scope="col">Event</th><th scope="col">When (UTC)</th><th scope="col">Type</th><th scope="col">Actor</th><th scope="col">Payload hash</th></tr></thead>
-<tbody>{% for e in ex.timeline %}<tr><td class="num">{{ e.event_id }}</td><td>{{ e.occurred_at }}</td><td>{{ e.event_type }}</td><td>{{ e.actor_type }} {{ e.actor_id }}{% if e.actor_role %} ({{ e.actor_role }}){% endif %}</td><td class="hash">{{ e.payload_sha256[:16] }}…</td></tr>{% endfor %}</tbody></table></section>
+<table class="t compact"><thead><tr><th scope="col">Event</th><th scope="col">When (UTC)</th><th scope="col">Type</th><th scope="col">Actor</th><th scope="col">Payload hash</th></tr></thead>
+<tbody>{% for e in ex.timeline %}<tr><td class="num mono">{{ e.event_id }}</td><td class="nowrap">{{ e.occurred_at[:19] | replace('T', ' ') }}</td><td class="mono small">{{ e.event_type }}</td><td class="small">{{ e.actor_type }} {{ e.actor_id }}{% if e.actor_role %} ({{ e.actor_role }}){% endif %}</td><td class="hash">{{ e.payload_sha256[:16] }}…</td></tr>{% endfor %}</tbody></table>
+{% if ex.audience == 'client' %}<p class="small muted">Event payloads are omitted from the client copy; the payload hashes above let the operator's full record be checked against this list.</p>{% endif %}</section>
+
+<section><h2>Intake, suspicious-content check and classification</h2>
+<pre class="json">{{ {"intake": ex.intake, "suspicion": ex.suspicion, "classification": ex.classification} | tojson_pretty }}</pre></section>
 
 <section><h2>Evidence</h2>
-{% for e in ex.evidence %}<h3>{{ e.evidence_id }} <span class="muted">{{ e.kind }}, {{ e.source }}, {{ e.retrieved_at }}</span></h3><p class="hash">sha256 {{ e.sha256 }}</p><pre class="json">{{ e.content | tojson_pretty }}</pre>{% else %}<p class="muted">None.</p>{% endfor %}</section>
+{% for e in ex.evidence %}<h3><span class="mono">{{ e.evidence_id }}</span> <span class="muted small">{{ e.kind }}, {{ e.source }}, retrieved {{ e.retrieved_at }}</span></h3><p class="hash">sha256 {{ e.sha256 }}</p><pre class="json">{{ e.content | tojson_pretty }}</pre>{% else %}<p class="muted">None.</p>{% endfor %}</section>
 
 <section><h2>Attachments</h2>
-{% for a in ex.attachments %}<h3>{{ a.attachment_id }}: {{ a.file_name }} <span class="muted">{{ a.media_type }}, {{ a.page_count }} page(s)</span></h3><p class="hash">sha256 {{ a.sha256 }}</p><pre class="doc">{{ a.extracted_text }}</pre>{% else %}<p class="muted">None.</p>{% endfor %}</section>
+<p class="small muted">Original files are not stored by this demo. Each attachment's sha256 is the hash recorded at intake; the extracted text is reproduced below and in the zip bundle.</p>
+{% for a in ex.attachments %}<h3><span class="mono">{{ a.attachment_id }}</span>: {{ a.file_name }} <span class="muted small">{{ a.media_type }}, {{ a.page_count }} page(s)</span></h3><p class="hash">sha256 (as received) {{ a.sha256 }}<br>sha256 (extracted text) {{ a.extracted_text_sha256 }}</p><pre class="text">{{ a.extracted_text }}</pre>{% else %}<p class="muted">None.</p>{% endfor %}</section>
 
 <section><h2>Month by month</h2>
-<table class="grid compact"><thead><tr><th scope="col">Month</th><th scope="col">DPD</th><th scope="col">Expected</th><th scope="col">Reported</th><th scope="col">Result</th><th scope="col">Evidence</th></tr></thead>
-<tbody>{% for m in ex.comparison %}<tr><td>{{ m.month }}</td><td class="num">{{ m.dpd }}</td><td>{{ m.expected_rating }}</td><td>{{ m.reported_rating }}</td><td>{{ m.result }}</td><td>{{ m.evidence_ids | join(', ') }}</td></tr>{% else %}<tr><td colspan="6" class="muted">None.</td></tr>{% endfor %}</tbody></table></section>
+<table class="t compact"><thead><tr><th scope="col">Month</th><th scope="col">Days past due (system of record)</th><th scope="col">Expected rating</th><th scope="col">Reported rating</th><th scope="col">Result</th><th scope="col">Evidence</th></tr></thead>
+<tbody>{% for m in ex.comparison %}<tr class="{{ 'changed' if m.result == 'MISMATCH' else '' }}"><td>{{ m.month }}</td><td class="num">{{ dash(m.dpd) }}</td><td class="mono">{{ dash(m.expected_rating) }}</td><td class="mono">{{ dash(m.reported_rating) }}</td><td>{{ m.result }}</td><td class="mono small">{{ m.evidence_ids | join(', ') }}</td></tr>{% else %}<tr><td colspan="6" class="muted">None.</td></tr>{% endfor %}</tbody></table>
+<p class="small muted">Ratings are invented placeholder codes (payment_rating_map, unverified), not Metro 2 values.</p></section>
 
 <section><h2>Claims, quotes and findings</h2>
-<table class="grid compact"><thead><tr><th scope="col">Claim</th><th scope="col">Quote and span</th><th scope="col">Finding</th><th scope="col">Evidence or reason</th></tr></thead>
-<tbody>{% for c in ex.claims %}<tr><td>{{ c.claim_id }}: {{ c.text }}</td><td>“{{ c.quote }}” {{ c.source_id }} {{ c.span }}</td><td>{{ c.finding or 'none' }} ({{ c.finding_source or 'invalid' }})</td><td>{{ c.evidence_ids | join(', ') }} {{ c.reason }}</td></tr>{% else %}<tr><td colspan="4" class="muted">None.</td></tr>{% endfor %}</tbody></table></section>
+<table class="t compact"><thead><tr><th scope="col">Claim</th><th scope="col">Quote and location</th><th scope="col">Finding</th><th scope="col">Evidence or reason</th></tr></thead>
+<tbody>{% for k in ex.claims %}<tr><td><span class="mono">{{ k.claim_id }}</span> {{ k.text }}<div class="small muted">{{ k.claim_type }}{% if k.months %}, {{ k.months | join(', ') }}{% endif %}</div></td><td>&ldquo;{{ k.quote }}&rdquo; <span class="mono small">{{ k.source_id }} {{ k.span }}</span></td><td>{{ finding_label(k.finding) }} <span class="mono small">({{ k.finding_source or 'invalid' }}{% if k.finding_source == 'HUMAN' %}; system said {{ k.system_finding or 'none' }}{% endif %})</span></td><td class="small"><span class="mono">{{ k.evidence_ids | join(', ') }}</span> {{ k.reason }}</td></tr>{% else %}<tr><td colspan="4" class="muted">None.</td></tr>{% endfor %}</tbody></table></section>
 
-<section><h2>Decision</h2><pre class="json">{{ ex.decision | tojson_pretty }}</pre></section>
+<section><h2>Decision and rule firings</h2>
+{% if ex.decision %}<p class="small">Proposed outcome <span class="mono">{{ ex.decision.outcome }}</span>, rules version <span class="mono">{{ ex.decision.rules_version }}</span>.</p>
+<table class="t compact"><thead><tr><th scope="col">Rule ID</th><th scope="col">Version</th><th scope="col">Result</th><th scope="col">Evidence</th><th scope="col">Detail</th></tr></thead>
+<tbody>{% for f in ex.decision.firings %}<tr><td class="mono">{{ f.rule_id }}</td><td class="mono">{{ f.rule_version }}</td><td>{{ f.result }}</td><td class="mono small">{{ f.evidence_ids | join(', ') }}</td><td class="small">{{ f.detail }}</td></tr>{% endfor %}</tbody></table>
+<pre class="json">{{ ex.decision | tojson_pretty }}</pre>{% else %}<p class="muted">No decision recorded.</p>{% endif %}</section>
 
 <section><h2>Draft versions</h2>
-{% for d in ex.drafts %}<h3>Version {{ d.version }} by {{ d.created_by }}, {{ d.created_at }} <span class="muted">valid={{ d.valid }}, attempts={{ d.attempts }}</span></h3>
-<ol>{% for s in d.sentences %}<li>[{{ s.source }}{% if s.template_id %} {{ s.template_id }}{% endif %}{% if s.evidence_ids %}; {{ s.evidence_ids | join(', ') }}{% endif %}] {{ s.text }}</li>{% endfor %}</ol>
-{% if d.validator_errors %}<p>Validator errors: {{ d.validator_errors | join('; ') }}</p>{% endif %}{% else %}<p class="muted">None.</p>{% endfor %}</section>
+{% for d in ex.drafts %}<h3>Version {{ d.version }} by {{ d.created_by }}, {{ d.created_at[:19] | replace('T', ' ') }} <span class="muted small">{{ 'reviewer-written' if d.human_authored else ('valid' if d.valid else 'INVALID') }}, attempts {{ d.attempts }}, templates {{ dash(d.template_library_version) }}</span></h3>
+<p class="hash">sha256 {{ d.sha256 }}</p>
+<ol class="narr">{% for t in d.sentences %}<li>{{ t.text }}<br>{{ sentence_sources(t) }}</li>{% else %}<li class="muted">No sentences.</li>{% endfor %}</ol>
+{% if d.validator_errors %}<p class="small">Validator errors: {{ d.validator_errors | join('; ') }}</p>{% endif %}{% else %}<p class="muted">None.</p>{% endfor %}</section>
 
 <section><h2>Reviewer decisions</h2>
-<ol>{% for r in ex.reviews %}<li>{{ r.created_at }}: <strong>{{ r.action }}</strong> by {{ r.actor_name }} ({{ r.actor_id }}, {{ r.actor_role }}), {{ r.from_state }} to {{ r.to_state }}{% if r.reason_code %}, reason {{ r.reason_code }}{% endif %}{% if r.reason_text %}: {{ r.reason_text }}{% endif %}</li>{% else %}<li class="muted">None.</li>{% endfor %}</ol></section>
+<table class="t compact"><thead><tr><th scope="col">When (UTC)</th><th scope="col">Action</th><th scope="col">By</th><th scope="col">State</th><th scope="col">Reason</th></tr></thead>
+<tbody>{% for r in ex.reviews %}<tr><td class="nowrap">{{ r.created_at[:19] | replace('T', ' ') }}</td><td><strong>{{ r.action }}</strong>{% if r.stage %} <span class="small muted">({{ r.stage }})</span>{% endif %}</td><td>{% if ex.audience != 'client' %}{{ r.actor_name }} {% endif %}<span class="mono small">{{ r.actor_id }}</span> {{ r.actor_role }}</td><td class="small">{{ r.from_state }} &rarr; {{ r.to_state }}</td><td class="small">{% if r.reason_code %}<span class="mono">{{ r.reason_code }}</span>{% endif %}{% if r.reason_text %}: {{ r.reason_text }}{% endif %}</td></tr>{% else %}<tr><td colspan="5" class="muted">None.</td></tr>{% endfor %}</tbody></table></section>
 
 <section><h2>Response packages</h2>
-{% for p in ex.packages %}<h3>Package version {{ p.package_version }}, {{ p.created_at }}</h3><p class="hash">sha256 {{ p.sha256 }}</p><pre class="json">{{ p | tojson_pretty }}</pre>{% else %}<p class="muted">None.</p>{% endfor %}</section>
+{% for p in ex.packages %}{% set ig = ex.package_integrity[loop.index0] if ex.package_integrity | length > loop.index0 else none %}
+<h3>Package version {{ p.package_version }}: {{ outcome_label(p.outcome) }} <span class="muted small">written {{ p.created_at[:19] | replace('T', ' ') }} UTC, schema {{ p.package_schema_version or 'web-package-1' }}</span></h3>
+{% if not standalone %}<p class="small"><a href="{{ base }}/packages/{{ p.package_version }}.html">Open the response package</a> &middot; <a href="{{ base }}/packages/{{ p.package_version }}.pdf">PDF</a> &middot; <a href="{{ base }}/packages/{{ p.package_version }}.json">JSON</a></p>{% endif %}
+<p class="hash">sha256 {{ p.sha256 }}{% if p.supersedes_package_sha256 %}<br>supersedes {{ p.supersedes_package_sha256 }}{% endif %}</p>
+{% if p.change_reason %}<p class="small">Changed after submission: <span class="mono">{{ p.change_reason.reason_code }}</span>: {{ p.change_reason.reason_text }}</p>{% endif %}
+<p class="small">Authorized name (<span class="mono">dfAuthorizedName</span>): {{ p.dfAuthorizedName }} &middot; approvals: {% for a in p.approvals %}{{ a.display_name }} ({{ a.role }}, {{ a.stage }}){% if not loop.last %}; {% endif %}{% endfor %}</p>
+{% set prm = ex.reference_tables.payment_rating_map if ex.reference_tables else none %}
+{% if p.month_by_month %}{{ month_table(p.month_by_month, p.outcome, placeholder=not (prm is mapping and prm.verified)) }}{% endif %}
+{% if ig %}<div class="small">{% for k in ig.checks %}<div class="{{ 'check-ok' if k.ok else 'check-bad' }}">{{ k.name }} <span class="muted">{{ k.detail }}</span></div>{% endfor %}</div>{% endif %}
+{% else %}<p class="muted">None.</p>{% endfor %}</section>
 
-<section><h2>Versions</h2><pre class="json">{{ ex.versions | tojson_pretty }}</pre>
+<section><h2>Versions</h2>
+<dl class="kv"><dt>Rules</dt><dd class="mono">{{ dash(ex.versions.rules_version) }}</dd>
+<dt>Template library</dt><dd class="mono">{{ dash(ex.versions.template_library_version) }}</dd>
+<dt>Suspicious-content patterns</dt><dd class="mono">{{ dash(ex.versions.suspicion_patterns_version) }}</dd>
+<dt>Model IDs</dt><dd class="mono small">{{ (ex.versions.model_ids or []) | join(', ') or 'none recorded' }}</dd>
+<dt>Prompt templates</dt><dd class="mono small">{{ (ex.versions.prompt_templates or []) | join(', ') or 'none recorded' }}</dd>
+<dt>Artifact versions</dt><dd class="mono small">{% for k, v in (ex.versions.artifact_versions or {}) | dictsort %}{{ k }} v{{ v }}{% if not loop.last %}, {% endif %}{% endfor %}</dd></dl>
 <h3>Reference tables</h3>
-<table class="grid compact"><thead><tr><th scope="col">Table</th><th scope="col">Version</th><th scope="col">Verified</th></tr></thead>
-<tbody>{% for k, v in ex.reference_tables | dictsort %}<tr><td>{{ k }}</td><td>{{ v.version if v is mapping else v }}</td><td>{{ v.verified if v is mapping else '' }}</td></tr>{% endfor %}</tbody></table></section>
+<table class="t compact"><thead><tr><th scope="col">Table</th><th scope="col">Version</th><th scope="col">Verified</th></tr></thead>
+<tbody>{% for k, v in ex.reference_tables | dictsort %}<tr><td class="mono">{{ k }}</td><td class="mono">{{ v.version if v is mapping else v }}</td><td>{% if v is mapping %}{% if v.verified %}<span class="pill ok">verified</span>{% else %}<span class="pill bad">unverified placeholder</span>{% endif %}{% endif %}</td></tr>{% endfor %}</tbody></table></section>
+
+<section><h2>Limitations of this record</h2>
+<ul class="small">{% for l in ex.limitations %}<li>{{ l }}</li>{% endfor %}{% for r in ex.redactions %}<li>Client copy: {{ r }}</li>{% endfor %}</ul></section>
+<p class="foot">Export schema {{ ex.export_schema_version }}. The JSON export is the machine-readable record; this rendering is generated from the same data.</p>
 </main>
 </body>
 </html>

@@ -1,0 +1,89 @@
+{# R-20 response package document. OWNER: package agent. Context: doc (package.model.package_document),
+   masked, standalone, css, links (toolbar hrefs or none). #}
+{% from "_package_macros.html" import head_assets, demo_band, outcome_label, finding_label, dash, sentence_sources, month_table %}
+{% set p = doc.pkg %}
+<!doctype html>
+<html lang="en">
+<head>{{ head_assets(standalone, css, "Response package v" ~ doc.version ~ " " ~ p.case_id ~ " (synthetic)") }}</head>
+<body class="doc package">
+<main class="sheet" data-testid="package-doc">
+{% if links %}<nav class="toolbar" aria-label="Downloads">{% for name, href in links %}<a href="{{ href }}">{{ name }}</a>{% endfor %}</nav>{% endif %}
+{{ demo_band("RESPONSE") }}
+
+<header class="doc-head">
+  <div>
+    <p class="not-sent" data-testid="not-sent">Response package: NOT SENT. Synthetic demo.</p>
+    <p class="kicker">Dispute response package &middot; version {{ doc.version }}{% if p.supersedes_package_sha256 %} (supersedes an earlier version){% endif %}</p>
+    <h1>{{ p.channel }} response, case {{ p.case_id }}</h1>
+    <p class="ids">Control number <span class="mono">{{ p.control_number }}</span> &middot; Bureau <span class="mono">{{ p.cra }}</span> &middot; Account <span class="mono" data-testid="account">{{ doc.account_masked }}</span></p>
+  </div>
+  <div class="result"><span class="label">Result</span><span class="value o-{{ p.outcome }}" data-testid="result">{{ outcome_label(p.outcome) }}</span>
+    <div class="small muted">e-OSCAR response code: not mapped (U6)</div></div>
+</header>
+
+<dl class="facts">
+  <div><dt>Received</dt><dd>{{ dash(doc.timing.date_received) }}</dd></div>
+  <div><dt>Response due</dt><dd>{{ dash(doc.timing.response_due_date) }} <span class="muted small">(internal target {{ dash(doc.timing.internal_target_date) }})</span></dd></div>
+  <div><dt>Finalised</dt><dd>{{ (doc.timing.finalised_at or '—')[:16] | replace('T', ' ') }} UTC
+    {% if doc.timing.calendar_days_before_due is not none %}<br><span class="pill {{ 'ok' if doc.timing.on_or_before_due else 'bad' }}">{% if doc.timing.on_or_before_due %}{{ doc.timing.calendar_days_before_due }} calendar days before due{% else %}{{ -doc.timing.calendar_days_before_due }} days after due{% endif %}</span>{% endif %}</dd></div>
+  <div><dt>Authorized name <span class="mono">dfAuthorizedName</span></dt><dd data-testid="authorized-name">{{ dash(p.dfAuthorizedName) }}</dd></div>
+</dl>
+
+{% if p.change_reason %}
+<p class="pill warn changed-note">Changed after submission: {{ p.change_reason.reason_code }}: {{ p.change_reason.reason_text }}</p>
+{% endif %}
+
+<section>
+<h2>Account information in this response</h2>
+{% if p.outcome == 'MODIFY' %}<p class="small muted">Month by month: the value we reported, what our system of record supports, and the value this response returns. Corrected months are highlighted.</p>
+{% elif p.outcome == 'VERIFIED_AS_REPORTED' %}<p class="small muted">Every disputed month is returned as reported; the system of record supports the reported value.</p>
+{% elif p.outcome == 'DELETE' %}<p class="small muted">The response requests deletion of the disputed information.</p>{% endif %}
+{% set prm = (p.versions.decision_table_versions or {}).get('payment_rating_map') if p.versions else none %}
+{{ month_table(doc.months, p.outcome, placeholder=not (prm is mapping and prm.verified)) }}
+<p class="small muted">Dispute codes received: <span class="mono">{{ (p.dispute.dispute_codes if p.dispute else []) | join(', ') or '—' }}</span> (placeholder codes). Disputed months: {{ (p.dispute.disputed_months if p.dispute else []) | join(', ') or '—' }}.</p>
+</section>
+
+<section>
+<h2>Response narrative</h2>
+<ol class="narr" data-testid="narrative">{% for s in p.narrative_sentences %}<li>{{ s.text }}<br>{{ sentence_sources(s) }}</li>{% else %}<li class="muted">No narrative.</li>{% endfor %}</ol>
+<p class="small muted">TEMPLATE sentences carry the outcome and corrected values from the decision; LLM sentences cite evidence IDs and consumer-quote spans (offline stand-in model in this demo); HUMAN sentences were written by the reviewer.</p>
+</section>
+
+{% if doc.basis %}
+<section>
+<h2>Basis for the result</h2>
+<p class="small">System proposal: <strong>{{ outcome_label(doc.basis.proposed_outcome) }}</strong>{% if doc.basis.departs_from_proposal %} &middot; <span class="pill human">reviewer departed from the proposal</span>{% endif %} &middot; rules version <span class="mono">{{ dash(doc.basis.rules_version) }}</span></p>
+<table class="t compact"><thead><tr><th scope="col">Rule</th><th scope="col">Version</th><th scope="col">Result</th><th scope="col">Evidence</th><th scope="col">Detail</th></tr></thead>
+<tbody>{% for f in doc.basis.rule_firings %}<tr><td class="mono">{{ f.rule_id }}</td><td class="mono">{{ f.rule_version }}</td><td>{{ f.result }}</td><td class="mono small">{{ f.evidence_ids | join(', ') }}</td><td class="small">{{ f.detail }}</td></tr>{% else %}<tr><td colspan="5" class="muted">No rule firings recorded.</td></tr>{% endfor %}</tbody></table>
+<table class="t compact"><thead><tr><th scope="col">Claim</th><th scope="col">Finding</th><th scope="col">By</th><th scope="col">Evidence or reason</th></tr></thead>
+<tbody>{% for c in doc.basis.claims %}<tr><td><span class="mono">{{ c.claim_id }}</span> {{ c.text }}</td><td>{{ finding_label(c.finding) }}</td><td>{% if c.finding_source == 'HUMAN' %}<span class="pill human">reviewer</span>{% else %}{{ c.finding_source or '—' }}{% endif %}</td><td class="small"><span class="mono">{{ c.evidence_ids | join(', ') }}</span> {{ c.reason }}</td></tr>{% else %}<tr><td colspan="4" class="muted">No claims extracted.</td></tr>{% endfor %}</tbody></table>
+</section>
+{% endif %}
+
+<section>
+<h2>Approvals</h2>
+<table class="t compact" data-testid="approvals"><thead><tr><th scope="col">Stage</th><th scope="col">Approver</th><th scope="col">Role</th><th scope="col">When (UTC)</th></tr></thead>
+<tbody>{% for a in p.approvals %}<tr><td>{{ {'first': 'First approval', 'second': 'Second approval (R-19)', 'final': 'Approval'}.get(a.stage, a.stage) }}</td><td>{{ a.display_name }} <span class="muted small mono">{{ a.user_id }}</span></td><td>{{ a.role }}</td><td class="nowrap">{{ ((a.at or '—')[:19]) | replace('T', ' ') }}</td></tr>{% endfor %}</tbody></table>
+</section>
+
+<section>
+<h2>Versions and integrity</h2>
+<dl class="kv">
+  <dt>Package schema</dt><dd class="mono">{{ doc.schema_version }} <span class="pill warn">placeholder, not validated</span></dd>
+  <dt>Package hash (stored)</dt><dd class="hash">{{ doc.sha256 }}</dd>
+  <dt>Content hash</dt><dd class="hash">{{ doc.integrity.content_sha256 }}</dd>
+  <dt>Integrity checks</dt><dd data-testid="integrity">{% for c in doc.integrity.checks %}<div class="{{ 'check-ok' if c.ok else 'check-bad' }}">{{ c.name }} <span class="muted small">{{ c.detail }}</span></div>{% endfor %}</dd>
+  {% if p.supersedes_package_sha256 %}<dt>Supersedes</dt><dd class="hash">{{ p.supersedes_package_sha256 }}</dd>{% endif %}
+  <dt>Rules</dt><dd class="mono">{{ dash(p.versions.rules_version) }}</dd>
+  <dt>Decision tables</dt><dd class="mono small">{% for k, v in (p.versions.decision_table_versions or {}) | dictsort %}{{ k }} {{ v.version if v is mapping else v }}{% if v is mapping and not v.verified %} (unverified){% endif %}{% if not loop.last %}; {% endif %}{% else %}—{% endfor %}</dd>
+  <dt>Template library</dt><dd class="mono">{{ dash(p.versions.template_library_version) }}</dd>
+  <dt>Model</dt><dd class="mono small">{{ (p.versions.model_ids or []) | join(', ') or 'none recorded' }}</dd>
+  <dt>Prompts</dt><dd class="mono small">{{ (p.versions.prompt_templates or []) | join(', ') or 'none recorded' }}</dd>
+  <dt>Delivered to</dt><dd>Stub response sink (nothing leaves the system). Receipt <span class="hash">{{ p.sink_receipt }}</span></dd>
+</dl>
+</section>
+
+<p class="foot">{{ doc.schema_status.note }} {% if masked %}Client copy: account masked to last 4; analysts shown by staff ID and role. {% endif %}Generated from the immutable package record; the JSON form of this package is the record of truth.</p>
+</main>
+</body>
+</html>
