@@ -1,0 +1,63 @@
+{# Shared pieces for the response package and the audit export. OWNER: package agent.
+   Uses only built-in Jinja features so it renders under the web app's environment too. #}
+{% macro head_assets(standalone, css, title) -%}
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }}</title>
+{% if standalone %}<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
+<style>{{ css }}</style>{% else %}<link rel="stylesheet" href="/static/package.css">{% endif %}
+{%- endmacro %}
+
+{% macro demo_band(kind) -%}
+<div class="demo-band" role="note" data-testid="demo-band">
+  <p class="banner-line" data-testid="r47-banner">DEMO · Synthetic data only · Not connected to e-OSCAR or any credit bureau · Never enter real personal information</p>
+  <strong>SYNTHETIC DEMONSTRATION. NOT A REAL {{ kind }}.</strong>
+  No real consumer, account, furnisher or bureau. Nothing left this system.
+  <ul>
+    <li>Placeholder schema: field names are our neutral labels, <strong>not</strong> e-OSCAR ACDV response or Metro 2&reg; field names (the one exception is <span class="mono">dfAuthorizedName</span>). It has <strong>not been validated</strong> against e-OSCAR or Metro 2.</li>
+    <li>Payment-rating values and dispute codes are invented placeholders. No e-OSCAR response code is mapped (the code list is not public; U6).</li>
+    <li>Not legal advice; not reviewed by counsel or an examiner.</li>
+  </ul>
+</div>
+{%- endmacro %}
+
+{% macro outcome_label(o) -%}
+{%- set L = {"VERIFIED_AS_REPORTED": "Verified as reported", "MODIFY": "Modify (account information updated)",
+             "DELETE": "Delete", "ESCALATED": "Escalated (no response sent)",
+             "OUT_OF_SCOPE": "Out of scope (handled outside this platform)"} -%}
+{{ L.get(o, o) if o else "No outcome yet" }}
+{%- endmacro %}
+
+{% macro finding_label(f) -%}
+{%- set L = {"SUPPORTED": "Supported by our records", "CONTRADICTED": "Contradicted by our records",
+             "NOT_ADDRESSABLE": "Cannot be resolved from our records"} -%}
+{{ L.get(f, f) if f else "No valid finding" }}
+{%- endmacro %}
+
+{% macro dash(v) -%}{{ v if v is not none and v != "" else "—" }}{%- endmacro %}
+
+{% macro sentence_sources(s) -%}
+<span class="src"><span class="tag {{ s.source }}">{{ s.source }}</span>{% if s.template_id %} <span class="tag">{{ s.template_id }}</span>{% endif %}{% for e in s.evidence_ids or [] %} <span class="tag">{{ e }}</span>{% endfor %}{% for q in s.quote_spans or [] %} <span class="tag">quote {{ q[0] }} {{ q[1] }}&ndash;{{ q[2] }}</span>{% endfor %}</span>
+{%- endmacro %}
+
+{% macro month_table(months, outcome, placeholder=true) -%}
+<table class="t" data-testid="month-table">
+<thead><tr><th scope="col">Month</th><th scope="col">Field (placeholder)</th><th scope="col">As reported</th>
+<th scope="col">System of record</th><th scope="col"></th><th scope="col">In this response</th><th scope="col">Evidence</th></tr></thead>
+<tbody>
+{% for m in months %}
+<tr class="{{ 'changed' if m.changed else '' }}">
+  <td class="nowrap">{{ m.month }}</td>
+  <td>{{ 'Payment rating' if m.field == 'payment_rating' else m.field }}</td>
+  <td class="mono">{{ dash(m.reported) }}</td>
+  <td><span class="mono">{{ dash(m.system_of_record_value) }}</span>{% if m.days_past_due is not none %} <span class="muted small">({{ m.days_past_due }} days past due)</span>{% endif %}</td>
+  <td class="arrow">{{ '→' if m.changed else '' }}</td>
+  <td class="mono">{% if outcome == 'DELETE' %}<span class="muted">deletion requested</span>{% else %}{{ dash(m.response_value) }}{% if m.changed %} <span class="pill warn">corrected</span>{% else %} <span class="muted small">unchanged</span>{% endif %}{% endif %}</td>
+  <td class="mono small">{{ (m.evidence_ids or []) | join(', ') }}</td>
+</tr>
+{% else %}
+<tr><td colspan="7" class="muted">No month-level data in this record.</td></tr>
+{% endfor %}
+</tbody></table>
+{% if placeholder %}<p class="small muted">Rating values are <strong>placeholder codes</strong> (payment_rating_map, verified=false), not Metro 2&reg; values.</p>{% endif %}
+{%- endmacro %}

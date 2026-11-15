@@ -386,29 +386,11 @@ def reopen_submitted(conn, *, tenant_id: str, case_id: str, actor: Actor, reason
 
 # ---------------------------------------------------------------- package (R-20)
 def _finalise(conn, b: cd.CaseBundle, w: dict, *, approvals: list[dict], authorised_by: Actor, sink) -> dict:
+    from disputes.package.build import build_package   # package agent owns the package shape (R-20)
     case = b.case
-    prev = b.packages[-1] if b.packages else None
-    change_reason = None
-    if prev is not None:
-        reopen = next((r["data"] for r in reversed(b.reviews) if r["data"].get("action") == REOPEN), None)
-        change_reason = {"reason_code": (reopen or {}).get("reason_code"),
-                         "reason_text": (reopen or {}).get("reason_text"),
-                         "reopened_by": (reopen or {}).get("actor_id")}
-    sents = cd.narrative_sentences(b, w)
-    dispute = b.get(ArtifactKind.DISPUTE) or {}
-    pkg = {
-        "package_version": len(b.packages) + 1,
-        "tenant_id": case["tenant_id"], "case_id": case["case_id"], "channel": case["channel"],
-        "control_number": case["control_number"], "cra": case["cra"], "account_number": case["account_number"],
-        "outcome": w["outcome"], "corrections": w["corrections"],
-        "narrative": " ".join(s["text"] for s in sents), "narrative_sentences": sents,
-        "dfAuthorizedName": authorised_by.display_name,
-        "approvals": approvals,
-        "versions": cd.versions_for_case(conn, b),
-        "supersedes_package_sha256": prev["data_sha256"] if prev else None,
-        "change_reason": change_reason,
-        "synthetic": bool(case.get("synthetic", True)) and bool(dispute.get("synthetic", True)),
-    }
+    pkg = build_package(b, w, approvals=approvals, authorised_name=authorised_by.display_name,
+                        versions=cd.versions_for_case(conn, b))
+    change_reason = pkg["change_reason"]
     receipt = sink.write_package(pkg)
     art = repo.put_artifact(conn, tenant_id=case["tenant_id"], case_id=case["case_id"], kind=ArtifactKind.PACKAGE,
                             data={**pkg, "sink_receipt": receipt}, created_by=authorised_by.user_id)

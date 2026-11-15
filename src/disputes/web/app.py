@@ -838,6 +838,7 @@ def create_app(*, database_url: str | None = None, session_secret: str | None = 
             return templates.TemplateResponse(request, "export.html", {"ex": ex, "me": None})
         raise HttpError(404, "Export format must be json or html.")
 
+    from disputes.web.package_routes import build_router as _pkg; app.include_router(_pkg(handle=handle, staff=staff, require_tenant=require_tenant, client_only=client_only, client_case_or_404=client_case_or_404, client_read=client_read))  # noqa: E501,E702 (package)
     return app
 
 
