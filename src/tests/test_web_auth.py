@@ -39,16 +39,22 @@ def test_totp_verification():
     assert not auth.verify_totp(s, "abcdef") and not auth.verify_totp(None, "123456") and not auth.verify_totp(s, "")
 
 
-def test_session_idle_timeout_and_tamper():
-    c = auth.SessionCodec("k")
-    sess = c.new_session("u1", now=1000)
-    tok = c.dump(sess)
-    assert c.load(tok, idle_timeout_s=1800, now=1000 + 1799)["uid"] == "u1"
-    assert c.load(tok, idle_timeout_s=1800, now=1000 + 1801) is None
-    assert c.load(tok + "x", idle_timeout_s=1800, now=1001) is None
-    assert auth.SessionCodec("other").load(tok, idle_timeout_s=1800, now=1001) is None
-    touched = c.dump(c.touch(sess, now=2500))
-    assert c.load(touched, idle_timeout_s=1800, now=4000) is not None          # activity extends it
+def test_session_store_idle_absolute_and_revoke(conn, seeded):
+    """Server-side sessions (hardening): replaces the signed-cookie codec test."""
+    st = auth.SessionStore()
+    tok, row = st.create(conn, "u-spec", stage="ACTIVE")
+    assert len(tok) >= 40 and row["session_hash"] == auth.token_hash(tok) and row["session_hash"] != tok
+    assert st.load(conn, tok, idle_timeout_s=1800)["user_id"] == "u-spec"
+    assert st.load(conn, tok + "x", idle_timeout_s=1800) is None
+    assert st.load(conn, tok, stage="MFA_PENDING") is None                      # stage is part of the key
+    conn.execute("UPDATE web_sessions SET last_seen_at = now() - interval '31 minutes'")
+    assert st.load(conn, tok, idle_timeout_s=1800) is None                      # idle
+    tok2, _ = st.create(conn, "u-spec", stage="ACTIVE")
+    conn.execute("UPDATE web_sessions SET expires_at = now() - interval '1 second' WHERE session_hash = %s",
+                 (auth.token_hash(tok2),))
+    assert st.load(conn, tok2, idle_timeout_s=1800) is None                     # absolute lifetime
+    tok3, _ = st.create(conn, "u-spec", stage="ACTIVE")
+    assert st.revoke(conn, tok3, "test") and st.load(conn, tok3, idle_timeout_s=1800) is None
 
 
 def test_tenant_access_by_role(conn, seeded):
@@ -112,19 +118,17 @@ def test_user_without_totp_cannot_sign_in(conn, seeded, app_factory):
 
 def test_idle_timeout_logs_out(conn, seeded, app_factory):
     c = login(TestClient(app_factory()), seeded, "u-spec")
-    codec = auth.SessionCodec("test-secret")
-    old = codec.dump({"uid": "u-spec", "csrf": "x", "iat": 0, "seen": int(time.time()) - 31 * 60})
-    c.cookies.clear()
-    c.cookies.set(auth.SESSION_COOKIE, old)
+    assert c.get("/ops/t/synthetic-tenant-0/queue").status_code == 200
+    conn.execute("UPDATE web_sessions SET last_seen_at = now() - interval '31 minutes' WHERE user_id = 'u-spec'")
+    conn.commit()
     r = c.get("/ops/t/synthetic-tenant-0/queue", follow_redirects=False)
     assert r.status_code == 303 and r.headers["location"] == "/login"
     # the timeout is config: lower it to 1 minute and a 2-minute-old session is refused
+    c = login(TestClient(app_factory()), seeded, "u-spec")
     conn.execute("INSERT INTO config_versions (tenant_id, key, value, version, changed_by, reason) "
                  "VALUES ('ops','session_idle_timeout_min','1'::jsonb,1,'u-admin','test lower timeout')")
+    conn.execute("UPDATE web_sessions SET last_seen_at = now() - interval '2 minutes' WHERE user_id = 'u-spec'")
     conn.commit()
-    c.cookies.clear()
-    c.cookies.set(auth.SESSION_COOKIE, codec.dump({"uid": "u-spec", "csrf": "x", "iat": 0,
-                                                   "seen": int(time.time()) - 120}))
     assert c.get("/ops", follow_redirects=False).headers["location"] == "/login"
 
 

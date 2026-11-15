@@ -26,7 +26,8 @@ from dataclasses import dataclass
 from disputes.audit.chain import append_event, canonical, sha256_hex
 from disputes.config import Config
 from disputes.db import repo
-from disputes.domain import ActorType, ArtifactKind, CaseState as S, Outcome, ReviewAction, Role, SuspicionLevel
+from disputes.domain import (ActorType, ArtifactKind, CaseState as S, Draft, DraftSentence, Outcome, ReviewAction,
+                             ReviewRecord, Role, SentenceSource, SuspicionLevel, to_jsonable)
 from disputes.web import casedata as cd
 from disputes.web import metrics
 from disputes.workflow.state_machine import transition
@@ -35,7 +36,7 @@ REASON_CODES = ("EVIDENCE_MISREAD", "ADDITIONAL_EVIDENCE_OUTSIDE_SYSTEM", "HARDS
                 "CONSUMER_DOC_PERSUASIVE", "DATA_UNVERIFIABLE", "CLASSIFICATION_WRONG", "CLAIM_FINDING_ENTERED",
                 "NARRATIVE_EDIT_ONLY", "OTHER")
 ACTING_ROLES = frozenset({Role.SPECIALIST, Role.SUPERVISOR, Role.ADMIN})
-REOPEN = "REOPEN_AFTER_SUBMISSION"           # not in domain.ReviewAction; see notes (contract request)
+REOPEN = ReviewAction.REOPEN_AFTER_SUBMISSION.value
 _MONTH = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 
 
@@ -103,10 +104,10 @@ def _move(conn, case: dict, to: S, actor: Actor, reason: str | None = None) -> d
 def _review(conn, case: dict, actor: Actor, action: str, *, from_state: str, to_state: str,
             reason_code: str | None = None, reason_text: str | None = None, working: dict | None = None,
             extra: dict | None = None) -> dict:
-    rec = {"action": action, "actor_id": actor.user_id, "actor_role": actor.role.value,
-           "actor_name": actor.display_name, "reason_code": reason_code,
-           "reason_text": (reason_text or "").strip() or None, "from_state": from_state, "to_state": to_state,
-           **({"working": working} if working is not None else {}), **(extra or {})}
+    rec = cd.review_to_json(ReviewRecord(
+        action=ReviewAction(action).value, actor_id=actor.user_id, actor_role=actor.role,
+        actor_name=actor.display_name, from_state=S(from_state), to_state=S(to_state), reason_code=reason_code,
+        reason_text=(reason_text or "").strip() or None, working=working, extra=dict(extra or {})))
     art = repo.put_artifact(conn, tenant_id=case["tenant_id"], case_id=case["case_id"], kind=ArtifactKind.REVIEW,
                             data=rec, created_by=actor.user_id)
     append_event(conn, tenant_id=case["tenant_id"], case_id=case["case_id"], event_type="REVIEW_ACTION",
@@ -225,8 +226,9 @@ def edit(conn, *, tenant_id: str, case_id: str, actor: Actor, reason_code: str |
             if sents != w.get("narrative"):
                 w["narrative"] = sents
                 changes.append("narrative")
-                new_draft = {"sentences": sents, "validator_errors": [], "attempts": 0, "valid": True,
-                             "template_library_version": "", "human_authored": True}
+                new_draft = to_jsonable(Draft(
+                    sentences=tuple(DraftSentence(text=x["text"], source=SentenceSource.HUMAN) for x in sents),
+                    validator_errors=(), attempts=0, valid=True, template_library_version="", human_authored=True))
         if not changes:
             raise ActionError("nothing changed: edit the outcome, corrected fields, narrative or a claim finding")
         if w["outcome"] == Outcome.MODIFY.value and not w["corrections"]:

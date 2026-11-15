@@ -108,14 +108,24 @@ def process_one(conn, job: dict, *, deps_for: Callable, cfg: Config, now_fn=_utc
 def run_worker(conn, *, cfg: Config, deps_for: Callable | None = None, tenant_ids: list[str] | None = None,
                max_jobs: int | None = None, lease_s: float = jobs.DEFAULT_LEASE_S,
                backoff_base_s: float = jobs.DEFAULT_BACKOFF_BASE_S, wait_for_backoff: bool = False,
-               max_wait_s: float = 120.0, now_fn=_utcnow) -> dict:
+               max_wait_s: float = 120.0, now_fn=_utcnow, cfg_loader: Callable | None = None,
+               clock_refresh_s: float | None = None) -> dict:
     """Drain claimable jobs. With wait_for_backoff, also waits (up to max_wait_s in total) for
-    jobs in backoff, so the queue is empty when it returns. Returns counts."""
+    jobs in backoff, so the queue is empty when it returns. Returns counts.
+
+    cfg_loader(conn) -> Config, when given, is re-read before each job so an approved config change
+    reaches the pipeline without a restart (hardening: shared effective config).
+    clock_refresh_s, when given, runs the R-05 clock refresh at the start and then whenever that
+    many seconds have passed between jobs."""
     deps_for = deps_for or default_deps_for(cfg)
     stats = {"done": 0, "retry": 0, "dead": 0, "lost": 0, "reaped": 0}
     waited = 0.0
     _idle(conn)
+    last_refresh = None
     while max_jobs is None or sum(stats[k] for k in ("done", "retry", "dead", "lost")) < max_jobs:
+        if clock_refresh_s is not None and (last_refresh is None or time.monotonic() - last_refresh >= clock_refresh_s):
+            clock_pass(conn, cfg_loader(conn) if cfg_loader else cfg, now_fn, tenant_ids, stats)
+            last_refresh = time.monotonic()
         r = jobs.reap_expired_leases(conn, tenant_ids=tenant_ids)
         stats["reaped"] += r["requeued"] + r["dead"]
         stats["dead"] += r["dead"]
@@ -128,7 +138,28 @@ def run_worker(conn, *, cfg: Config, deps_for: Callable | None = None, tenant_id
             time.sleep(pause)
             waited += pause
             continue
-        stats[process_one(conn, job, deps_for=deps_for, cfg=cfg, now_fn=now_fn,
+        job_cfg = cfg
+        if cfg_loader is not None:
+            try:
+                job_cfg = cfg_loader(conn)
+            except Exception as e:  # noqa: BLE001 - keep the last known config rather than stop
+                _idle(conn)
+                log.error("config reload failed: %s", type(e).__name__)
+        stats[process_one(conn, job, deps_for=deps_for, cfg=job_cfg, now_fn=now_fn,
                           backoff_base_s=backoff_base_s)] += 1
     stats["queue"] = jobs.counts(conn, tenant_ids=tenant_ids)
     return stats
+
+
+def clock_pass(conn, cfg: Config, now_fn=_utcnow, tenant_ids=None, stats: dict | None = None) -> dict | None:
+    """One R-05 clock refresh pass that never raises (the queue must keep draining)."""
+    from disputes.workflow.clock_refresh import refresh_clocks
+    try:
+        r = refresh_clocks(conn, cfg=cfg, now=now_fn(), tenant_ids=tenant_ids)
+    except Exception as e:  # noqa: BLE001
+        _idle(conn)
+        log.error("clock refresh pass failed: %s", type(e).__name__)
+        return None
+    if stats is not None:
+        stats["clock_changed"] = stats.get("clock_changed", 0) + r["changed"]
+    return r

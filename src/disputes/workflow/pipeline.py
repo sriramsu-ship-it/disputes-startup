@@ -44,7 +44,7 @@ from __future__ import annotations
 
 import logging
 import traceback
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, is_dataclass, replace
 from datetime import date, datetime, timezone
 from typing import Any, Callable
 
@@ -370,6 +370,8 @@ def _run_steps(run: _Run) -> None:
         _deterministic_only(run, claims=[])
         _finish(run)
         return
+    if is_dataclass(classification) and hasattr(classification, "llm_suspicious"):   # R-14 flag on the record
+        classification = replace(classification, llm_suspicious=bool(getattr(run.budget, "suspicious_flag", False)))
     run.classification = classification
     with run.conn.transaction():
         run.flush_model_calls("classify")

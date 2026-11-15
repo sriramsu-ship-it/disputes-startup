@@ -246,3 +246,35 @@ def versions_for_case(conn, b: CaseBundle) -> dict:
         "prompt_templates": sorted(prompts),
         "artifact_versions": {k: v["version"] for k, v in sorted(b.artifact_meta.items())},
     }
+
+
+# ---------------------------------------------------------------- review records (domain.ReviewRecord)
+_REVIEW_FIELDS = ("action", "actor_id", "actor_role", "actor_name", "from_state", "to_state", "reason_code",
+                  "reason_text", "working")
+
+
+def review_to_json(rec) -> dict:
+    """Store a domain.ReviewRecord in the flat JSON shape the `review` artifact has always had
+    (`extra` keys at the top level; `working` only when set), so existing exports, hashes and
+    readers keep working."""
+    from disputes.domain import to_jsonable
+    d = to_jsonable(rec)
+    extra = d.pop("extra", None) or {}
+    if d.get("working") is None:
+        d.pop("working", None)
+    clash = set(extra) & set(_REVIEW_FIELDS)
+    if clash:
+        raise ValueError(f"ReviewRecord.extra may not reuse field names: {sorted(clash)}")
+    return {**d, **extra}
+
+
+def review_from_json(d: dict):
+    """Compatibility read: flat records (current and pre-ReviewRecord) and a nested `extra` dict."""
+    from disputes.domain import CaseState, ReviewRecord, Role
+    d = dict(d or {})
+    extra = dict(d.pop("extra", None) or {})
+    extra.update({k: v for k, v in d.items() if k not in _REVIEW_FIELDS})
+    return ReviewRecord(action=d.get("action"), actor_id=d.get("actor_id"), actor_role=Role(d["actor_role"]),
+                        actor_name=d.get("actor_name"), from_state=CaseState(d["from_state"]),
+                        to_state=CaseState(d["to_state"]), reason_code=d.get("reason_code"),
+                        reason_text=d.get("reason_text"), working=d.get("working"), extra=extra)
