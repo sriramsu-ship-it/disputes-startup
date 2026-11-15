@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Users{% endblock %}
+{% block content %}
+<div class="page-head"><div>
+  <h1>Users</h1>
+  <p class="sub">Create staff and client users, end sessions, reset sign-in. New users get a one-time link to set a password and enrol an authenticator app. Every change is written to the audit log. We never email links: copy the link to the person yourself.</p>
+</div></div>
+{% if notice %}<p class="alert alert-ok" role="status">{{ notice }}</p>{% endif %}
+{% if error %}<p class="alert alert-error" role="alert" data-testid="admin-error">{{ error }}</p>{% endif %}
+{% if invite_url %}
+<section class="panel" data-testid="invite-link">
+  <h2>One-time sign-in link</h2>
+  <p>Shown once. Valid for {{ invite_ttl_hours }} hours or until used. Anyone with this link can set up this account, so send it over a channel you trust.</p>
+  <p><code class="wrap">{{ invite_url }}</code></p>
+</section>
+{% endif %}
+
+<section class="panel">
+  <h2>Create a user</h2>
+  <form method="post" action="/ops/admin/users" class="inline-form">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Work email <input name="email" type="email" required maxlength="254"></label>
+    <label>Display name <input name="display_name" required maxlength="100"></label>
+    <label>Role
+      <select name="role" required>{% for r in roles %}<option value="{{ r }}">{{ r | replace('_',' ') | lower | capitalize }}</option>{% endfor %}</select>
+    </label>
+    <label>Client (client viewers only)
+      <select name="client_tenant"><option value="">—</option>{% for t in client_tenants %}<option value="{{ t.tenant_id }}">{{ t.display_name }}</option>{% endfor %}</select>
+    </label>
+    <fieldset><legend>Client access (specialists, supervisors, auditors)</legend>
+      {% for t in client_tenants %}<label class="check"><input type="checkbox" name="staff_tenants" value="{{ t.tenant_id }}"> {{ t.display_name }}</label>{% endfor %}
+    </fieldset>
+    <button class="btn btn-primary" type="submit">Create and get link</button>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>All users</h2>
+  <table class="grid" data-testid="users">
+    <thead><tr><th scope="col">User</th><th scope="col">Role</th><th scope="col">Clients</th><th scope="col">Sign-in</th><th scope="col">Sessions</th><th scope="col">Actions</th></tr></thead>
+    <tbody>{% for u in users %}
+    <tr data-user="{{ u.user_id }}">
+      <td>{{ u.display_name }}<br><span class="muted small">{{ u.email }} · {{ u.user_id }}</span></td>
+      <td>{{ u.role | replace('_',' ') | lower | capitalize }}</td>
+      <td>{% if u.role == 'CLIENT_VIEWER' %}{{ u.tenant_id }}{% elif u.role == 'ADMIN' %}<span class="muted">all</span>{% else %}{{ u.staff_tenants | join(', ') or '—' }}{% endif %}</td>
+      <td>{% if not u.active %}<span class="chip">Inactive</span>{% elif u.locked %}<span class="chip clock-BREACHED">Locked</span>{% elif u.mfa_enrolled and u.has_password %}Set up{% elif u.invite_open %}Link sent{% else %}<span class="muted">Not set up</span>{% endif %}</td>
+      <td class="num">{{ u.live_sessions }}</td>
+      <td>{% if u.active %}
+        {% for op, text in [('revoke','End sessions'), ('reset','Reset sign-in'), ('unlock','Unlock'), ('deactivate','Deactivate')] %}
+          {% if not (op in ('reset','deactivate') and u.user_id == me.user_id) and not (op == 'unlock' and not u.locked) %}
+          <form method="post" action="/ops/admin/users/{{ u.user_id }}/{{ op }}" class="inline">
+            <input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn" type="submit">{{ text }}</button>
+          </form>{% endif %}
+        {% endfor %}
+        {% if u.role in ('SPECIALIST','SUPERVISOR','AUDITOR') %}
+        <form method="post" action="/ops/admin/users/{{ u.user_id }}/access" class="inline">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          {% for t in client_tenants %}<label class="check"><input type="checkbox" name="staff_tenants" value="{{ t.tenant_id }}" {% if t.tenant_id in u.staff_tenants %}checked{% endif %}> {{ t.tenant_id }}</label>{% endfor %}
+          <button class="btn" type="submit">Save access</button>
+        </form>{% endif %}
+      {% else %}<span class="muted">—</span>{% endif %}</td>
+    </tr>
+    {% endfor %}</tbody>
+  </table>
+</section>
+{% endblock %}

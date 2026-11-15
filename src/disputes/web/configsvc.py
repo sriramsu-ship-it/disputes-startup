@@ -1,7 +1,7 @@
 """R-21 / R-18 config administration. OWNER: web agent.
 
 Effective config = `Config` defaults overlaid by the newest `config_versions` row per key for the
-platform tenant 'ops'. A change is proposed by one ADMIN (`propose_change`) and applied only when a
+platform tenant 'ops' (loader shared with the worker: `disputes.workflow.effective_config`). A change is proposed by one ADMIN (`propose_change`) and applied only when a
 different ADMIN approves it (`decide_change`); both steps are audited ADMIN events written in the
 same transaction. `mode` cannot be changed here (R-35 live-mode gate is a deploy decision) and
 `llm_model_id` cannot be changed here (R-30: a model change must pass the full eval first).
@@ -14,6 +14,8 @@ from dataclasses import fields
 from disputes.audit.chain import append_event
 from disputes.config import Config, defaults
 from disputes.domain import ActorType, Role
+from disputes.workflow.effective_config import config_types
+from disputes.workflow.effective_config import effective_config as _shared_effective_config
 
 PLATFORM_TENANT = "ops"
 LOCKED_KEYS = frozenset({"mode", "llm_model_id"})
@@ -29,17 +31,12 @@ class ConfigForbidden(PermissionError):
 
 
 def _types() -> dict[str, type]:
-    d = defaults()
-    return {f.name: type(getattr(d, f.name)) for f in fields(Config)}
+    return config_types()
 
 
 def effective_config(conn, tenant_id: str = PLATFORM_TENANT) -> Config:
-    rows = conn.execute(
-        "SELECT DISTINCT ON (key) key, value FROM config_versions WHERE tenant_id = %s "
-        "ORDER BY key, version DESC", (tenant_id,)).fetchall()
-    types = _types()
-    over = {r["key"]: types[r["key"]](r["value"]) for r in rows if r["key"] in types}
-    return defaults().with_overrides(**over)
+    """Shared loader (hardening): the same function the worker and clock refresh use."""
+    return _shared_effective_config(conn, tenant_id)
 
 
 def current_rows(conn, tenant_id: str = PLATFORM_TENANT) -> list[dict]:

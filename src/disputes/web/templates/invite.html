@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Set up sign-in{% endblock %}
+{% block bodyclass %}auth{% endblock %}
+{% block content %}
+<section class="auth-card">
+  <h1>Set up your sign-in</h1>
+  <p class="lede">{{ v.display_name }} ({{ v.email }}){% if v.purpose == 'RESET' %}: an admin reset your sign-in{% endif %}. Choose a password and add this account to an authenticator app.</p>
+  {% if error %}<p class="alert alert-error" role="alert">{{ error }}</p>{% endif %}
+  <ol class="stack">
+    <li>In your authenticator app, add an account by setup key (time-based):<br>
+      <code data-testid="totp-secret">{{ v.secret_grouped }}</code></li>
+    <li>Or, if your app accepts a link, use:<br><code class="wrap" data-testid="totp-uri">{{ v.uri }}</code></li>
+  </ol>
+  <form method="post" action="/invite/{{ token }}" class="stack" autocomplete="off">
+    <label for="password">New password (at least {{ v.min_len }} characters)</label>
+    <input id="password" name="password" type="password" autocomplete="new-password" required minlength="{{ v.min_len }}">
+    <label for="confirm">Repeat the password</label>
+    <input id="confirm" name="confirm" type="password" autocomplete="new-password" required>
+    <label for="code">6-digit code from the app</label>
+    <input id="code" name="code" inputmode="numeric" pattern="[0-9 ]{6,7}" autocomplete="one-time-code" required>
+    <button class="btn btn-primary" type="submit">Save and continue</button>
+  </form>
+</section>
+{% endblock %}

@@ -5,9 +5,9 @@
   <div class="case-title">
     <p class="crumb"><a href="/client">Overview</a></p>
     <h1>{{ c.case_id }}</h1>
-    <p class="case-meta"><span class="chip state-{{ c.state }}">{{ label('state', c.state) }}</span>
+    <p class="case-meta"><span class="chip state-{{ c.state }}" data-testid="client-status">{{ c.status }}</span>{% if c.status_detail %}<span class="muted">{{ c.status_detail }}</span>{% endif %}
       <span>Account {{ c.account }}</span><span>{{ c.cra or '' }}</span>
-      <span>Outcome {{ label('outcome', c.final_outcome) if c.final_outcome else 'pending' }}</span></p>
+      <span>Outcome {{ label('outcome', c.outcome) if c.outcome else 'pending' }}</span></p>
   </div>
   {% if ruler %}
   <div class="ruler" aria-label="Deadline">
@@ -22,7 +22,7 @@
 <section class="panel">
   <h2>Status timeline</h2>
   <ol class="timeline" data-testid="client-timeline">
-    {% for t in timeline %}<li><time>{{ t.at.strftime('%Y-%m-%d %H:%M') }} UTC</time> {{ label('state', t.from) }} to <strong>{{ label('state', t.to) }}</strong> <span class="muted">({{ t.actor_role }})</span></li>
+    {% for t in timeline %}<li><time>{{ t.at.strftime('%Y-%m-%d %H:%M') }} UTC</time> {% if t.from_status %}{{ t.from_status }} to {% endif %}<strong>{{ t.to_status }}</strong> <span class="muted">({{ t.actor_role }})</span></li>
     {% else %}<li class="muted">No status changes recorded yet.</li>{% endfor %}
   </ol>
   {% if c.completed %}<p class="exports"><a class="btn" href="/client/cases/{{ c.case_id }}/export.html">View audit record</a> <a class="btn" href="/client/cases/{{ c.case_id }}/export.json">Download audit record (JSON)</a></p>

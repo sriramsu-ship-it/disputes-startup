@@ -5,12 +5,16 @@
     ingest --tenant T --fixtures DIR [--fixture-dates]
                                  enqueue one process_dispute job per line of DIR/acdvs.jsonl; the
                                  tenant's system of record is DIR/sor_accounts.jsonl
-    work [--no-wait] [--max-jobs N] [--loop [--poll-interval S]]
+    work [--no-wait] [--max-jobs N] [--loop [--poll-interval S] [--clock-refresh-s S]]
                                  run the worker until the queue is empty; with --loop, keep polling
                                  every S seconds (default 5) until SIGTERM/SIGINT (container worker)
+                                 and refresh R-05 clock states every --clock-refresh-s (default 300)
     serve [--host H] [--port P]  run the web app under uvicorn with proxy headers trusted only from
                                  DISPUTES_FORWARDED_ALLOW_IPS (default 127.0.0.1; set the VPC CIDR
                                  behind an ALB)
+    refresh-clocks [--as-of ISO] one R-05 clock-refresh pass over open cases
+    invite-admin --email E --name N
+                                 bootstrap an ADMIN; prints a one-time invite path
     verify [--anchor-dir D] [--case CASE --tenant T]
                                  recompute the audit chains (exit 1 if broken)
     anchor [--anchor-dir D]      write a write-once anchor of the global head
@@ -184,32 +188,38 @@ def cmd_ingest(url: str, args) -> int:
 
 def cmd_work(url: str, args) -> int:
     from disputes.db.core import connect
+    from disputes.workflow.effective_config import effective_config
     from disputes.workflow.worker import run_worker
-    cfg = defaults()
     try:
         from disputes.rules.gate import check_tables
-        check_tables(cfg)
+        check_tables(defaults())
     except NotImplementedError:
         print("WARNING: rules.gate.check_tables not implemented yet; R-35 gate skipped", file=sys.stderr)
     if args.loop:
-        return work_loop(url, cfg=cfg, poll_interval_s=args.poll_interval)
+        return work_loop(url, poll_interval_s=args.poll_interval,
+                         clock_refresh_s=args.clock_refresh_s if args.clock_refresh_s is not None else 300.0)
     with connect(url) as c:
-        stats = run_worker(c, cfg=cfg, max_jobs=args.max_jobs, wait_for_backoff=not args.no_wait)
+        stats = run_worker(c, cfg=effective_config(c), cfg_loader=effective_config, max_jobs=args.max_jobs,
+                           wait_for_backoff=not args.no_wait, clock_refresh_s=args.clock_refresh_s)
     print(json.dumps(stats))
     return 0
 
 
-def work_loop(url: str, *, cfg, poll_interval_s: float = 5.0, stop=None, max_idle_polls: int | None = None,
-              reconnect_max_s: float = 60.0) -> int:
+def work_loop(url: str, *, cfg=None, poll_interval_s: float = 5.0, stop=None, max_idle_polls: int | None = None,
+              reconnect_max_s: float = 60.0, clock_refresh_s: float | None = 300.0) -> int:
     """Long-running worker (deploy): drain the queue, sleep `poll_interval_s` when it is empty, repeat.
     Stops cleanly on SIGTERM/SIGINT (ECS sends SIGTERM) between jobs. A lost database connection is
     retried with capped backoff instead of crashing. `stop` (threading.Event) and `max_idle_polls`
-    exist for tests."""
+    exist for tests. Hardening: without `cfg`, the shared effective config (config_versions) is
+    re-read before every job; the R-05 clock refresh runs every `clock_refresh_s` seconds."""
     import logging
     import signal
     import threading
+    import time as _time
     from disputes.db.core import connect
-    from disputes.workflow.worker import run_worker
+    from disputes.workflow.effective_config import effective_config
+    from disputes.workflow.worker import clock_pass, run_worker
+    last_refresh = None
     log = logging.getLogger("disputes.worker")
     stop = stop or threading.Event()
     if threading.current_thread() is threading.main_thread():
@@ -222,7 +232,11 @@ def work_loop(url: str, *, cfg, poll_interval_s: float = 5.0, stop=None, max_idl
             with connect(url) as c:
                 backoff = 1.0
                 while not stop.is_set():
-                    stats = run_worker(c, cfg=cfg, max_jobs=50, wait_for_backoff=False)
+                    if clock_refresh_s and (last_refresh is None or _time.monotonic() - last_refresh >= clock_refresh_s):
+                        clock_pass(c, cfg or effective_config(c))
+                        last_refresh = _time.monotonic()
+                    stats = run_worker(c, cfg=cfg or effective_config(c), cfg_loader=None if cfg else effective_config,
+                                       max_jobs=50, wait_for_backoff=False)
                     worked = sum(stats[k] for k in ("done", "retry", "dead", "lost", "reaped"))
                     if worked:
                         idle = 0
@@ -252,7 +266,40 @@ def cmd_serve(url: str, args) -> int:
     uvicorn.run(create_app(database_url=url), host=args.host, port=args.port, log_config=None,
                 proxy_headers=True,
                 forwarded_allow_ips=os.environ.get("DISPUTES_FORWARDED_ALLOW_IPS", "127.0.0.1"),
-                server_header=False, timeout_graceful_shutdown=20)
+                server_header=False, timeout_graceful_shutdown=20,
+                access_log=False)  # hardening: disputes.web.request logs requests (masked, invite tokens redacted)
+    return 0
+
+
+def cmd_refresh_clocks(url: str, args) -> int:
+    """R-05: one clock-refresh pass over open cases (hardening). Safe to run from a scheduler."""
+    from datetime import datetime, timezone
+    from disputes.db.core import connect
+    from disputes.workflow.clock_refresh import refresh_clocks
+    from disputes.workflow.effective_config import effective_config
+    now = datetime.fromisoformat(args.as_of) if args.as_of else datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    with connect(url) as c:
+        print(json.dumps(refresh_clocks(c, cfg=effective_config(c), now=now)))
+    return 0
+
+
+def cmd_invite_admin(url: str, args) -> int:
+    """Bootstrap (hardening): create an ADMIN with a one-time invite link (password + TOTP are set by
+    the person who opens it). Prints the path once; only its hash is stored."""
+    from disputes.db.core import connect
+    from disputes.web.admin_users import AdminError, create_user
+    with connect(url) as c:
+        try:
+            out = create_user(c, actor_id="system:cli", actor_role=None, email=args.email,
+                              display_name=args.name, role="ADMIN", client_tenant=None, staff_tenants=[])
+        except AdminError as e:
+            print(f"ERROR: {e}", file=sys.stderr)
+            return 1
+        c.commit()
+    print(json.dumps({"user_id": out["user_id"], "invite_path": out["invite_path"],
+                      "note": "open <base-url><invite_path> within 72 hours; shown once"}))
     return 0
 
 
@@ -321,9 +368,16 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--no-wait", action="store_true", help="do not wait for jobs in backoff")
     s.add_argument("--loop", action="store_true", help="keep running and poll for new jobs (container worker)")
     s.add_argument("--poll-interval", type=float, default=5.0, help="seconds between polls when idle (--loop)")
+    s.add_argument("--clock-refresh-s", type=float, default=None,
+                   help="R-05 clock refresh interval (default 300 with --loop; off for a one-shot drain)")
     s = sub.add_parser("serve")
     s.add_argument("--host", default="127.0.0.1")
     s.add_argument("--port", type=int, default=8000)
+    s = sub.add_parser("refresh-clocks")
+    s.add_argument("--as-of", default=None, help="ISO datetime to evaluate at (default now)")
+    s = sub.add_parser("invite-admin")
+    s.add_argument("--email", required=True)
+    s.add_argument("--name", required=True)
     s = sub.add_parser("verify")
     s.add_argument("--anchor-dir", default=None)
     s.add_argument("--case", default=None)
@@ -345,7 +399,7 @@ def main(argv: list[str] | None = None) -> int:
     url = args.database_url or settings().database_url
     handlers = {"migrate": cmd_migrate, "seed-demo": cmd_seed_demo, "ingest": cmd_ingest, "work": cmd_work,
                 "verify": cmd_verify, "anchor": cmd_anchor, "backup": cmd_backup, "restore": cmd_restore,
-                "serve": cmd_serve}
+                "serve": cmd_serve, "refresh-clocks": cmd_refresh_clocks, "invite-admin": cmd_invite_admin}
     return handlers[args.cmd](url, args)
 
 

@@ -24,7 +24,7 @@
       {% endif %}
       {% if tenant_id %}<a href="/ops/t/{{ tenant_id }}/queue">Queue</a>{% endif %}
       {% if tenant_id and me.role.value in ('SUPERVISOR','ADMIN') %}<a href="/ops/t/{{ tenant_id }}/metrics.csv">Review metrics (CSV)</a>{% endif %}
-      {% if me.role.value == 'ADMIN' %}<a href="/ops/admin">Config</a>{% endif %}
+      {% if me.role.value == 'ADMIN' %}<a href="/ops/admin">Config</a> <a href="/ops/admin/users">Users</a>{% endif %}
     </nav>
     {% else %}
     <nav class="mainnav" aria-label="Portal"><a href="/client">Overview</a></nav>

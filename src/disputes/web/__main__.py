@@ -12,7 +12,7 @@ from disputes.web.pii import install_log_masking
 def main() -> None:
     logging.basicConfig(level=logging.INFO)
     install_log_masking()
-    uvicorn.run(create_app(), host="127.0.0.1", port=8000, log_config=None)
+    uvicorn.run(create_app(), host="127.0.0.1", port=8000, log_config=None, access_log=False)
 
 
 if __name__ == "__main__":

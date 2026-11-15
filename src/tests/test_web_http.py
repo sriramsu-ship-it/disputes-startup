@@ -215,7 +215,7 @@ def test_client_portal_is_own_tenant_only_and_masked(conn, seeded, app_factory):
     assert ca.get("/client/cases/B-DONE/export.json").status_code == 404
     assert ca.get("/client/cases/A-OPEN/export.json").status_code == 404           # not completed yet
     tl = ca.get("/client/cases/A-DONE").text
-    assert 'data-testid="client-timeline"' in tl and "Submitted (stub)" in tl and "u-spec" not in tl
+    assert 'data-testid="client-timeline"' in tl and "Response ready (not sent)" in tl and "u-spec" not in tl
     ex = ca.get("/client/cases/A-DONE/export.json").json()
     assert ex["masked"] is True and R22_KEYS <= set(ex)
     blob = json.dumps(ex)
